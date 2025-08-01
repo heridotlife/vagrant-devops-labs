@@ -1,0 +1,18 @@
+---
+# Kubernetes Configuration
+k8s_version: "{{ lookup('env', 'K8S_VERSION') | default('1.19.5', true) }}"
+
+# Monitoring Configuration
+monitoring_vm_ip: "10.0.254.31"
+monitoring_vm_hostname: "monitoring"
+
+# Network Configuration
+cluster_network: "10.0.254.0/24"
+master_nodes:
+  - "10.0.254.11"
+  - "10.0.254.12"
+  - "10.0.254.13"
+worker_nodes:
+  - "10.0.254.21"
+  - "10.0.254.22"
+  - "10.0.254.23" 

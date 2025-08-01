@@ -1,0 +1,79 @@
+---
+- name: Setup Monitoring VM with Prometheus, Grafana, and Loki
+  hosts: monitoring
+  become: yes
+  vars:
+    prometheus_port: 9090
+    grafana_port: 3000
+    loki_port: 3100
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - curl
+          - wget
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create monitoring directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /opt/monitoring
+        - /opt/monitoring/prometheus
+        - /opt/monitoring/grafana
+        - /opt/monitoring/loki
+        - /opt/monitoring/prometheus/data
+        - /opt/monitoring/grafana/data
+        - /opt/monitoring/loki/data
+
+    - name: Create Prometheus configuration
+      template:
+        src: ../../monitoring/prometheus/prometheus.yml.j2
+        dest: /opt/monitoring/prometheus/prometheus.yml
+        mode: '0644'
+
+    - name: Create Docker Compose file for monitoring stack
+      template:
+        src: ../../configs/monitoring/docker-compose-monitoring.yml.j2
+        dest: /opt/monitoring/docker-compose.yml
+        mode: '0644'
+
+    - name: Start monitoring stack
+      docker_compose:
+        project_src: /opt/monitoring
+        state: present
+
+    - name: Wait for services to be ready
+      wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: "{{ item }}"
+        timeout: 60
+      loop:
+        - "{{ prometheus_port }}"
+        - "{{ grafana_port }}"
+        - "{{ loki_port }}"
+
+    - name: Display monitoring stack information
+      debug:
+        msg: |
+          Monitoring stack deployed successfully!
+          - Prometheus: http://{{ ansible_default_ipv4.address }}:{{ prometheus_port }}
+          - Grafana: http://{{ ansible_default_ipv4.address }}:{{ grafana_port }}
+          - Loki: http://{{ ansible_default_ipv4.address }}:{{ loki_port }}
+          - Default Grafana credentials: admin/admin 

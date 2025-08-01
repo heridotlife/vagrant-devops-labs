@@ -1,0 +1,40 @@
+- hosts: workers
+  become: yes
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Install Kubernetes packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - apt-transport-https
+        - curl
+
+    - name: Add Kubernetes apt-key
+      shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+    - name: Add Kubernetes repo
+      copy:
+        content: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+        dest: /etc/apt/sources.list.d/kubernetes.list
+
+    - name: Install kubeadm, kubelet and kubectl
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - "kubelet={{ k8s_version }}-00"
+        - "kubeadm={{ k8s_version }}-00"
+        - "kubectl={{ k8s_version }}-00"
+
+    - name: Join the Kubernetes cluster
+      shell: /vagrant/join_command.sh
+      when: inventory_hostname in groups['workers']
+

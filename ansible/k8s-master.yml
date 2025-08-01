@@ -1,0 +1,61 @@
+- hosts: masters
+  become: yes
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Install Kubernetes packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - curl
+
+    - name: Add Kubernetes apt-key
+      shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+    - name: Add Kubernetes repo
+      copy:
+        content: "deb https://apt.kubernetes.io/ kubernetes- main"
+        dest: /etc/apt/sources.list.d/kubernetes.list
+
+    - name: Install kubeadm, kubelet and kubectl
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - "kubelet={{ k8s_version }}-00"
+        - "kubeadm={{ k8s_version }}-00"
+        - "kubectl={{ k8s_version }}-00"
+
+    - name: Initialize the Kubernetes cluster
+      command: kubeadm init --apiserver-advertise-address=10.0.254.11 --pod-network-cidr=10.244.0.0/16
+      when: inventory_hostname == 'master1'
+
+    - name: Set up kubeconfig
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+      when: inventory_hostname == 'master1'
+
+    - name: Install Calico network plugin
+      command: kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
+      when: inventory_hostname == 'master1'
+
+    - name: Generate join command
+      shell: kubeadm token create --print-join-command
+      register: join_command
+      when: inventory_hostname == 'master1'
+
+    - name: Save join command to file
+      copy:
+        content: "{{ join_command.stdout }}"
+        dest: /vagrant/join_command.sh
+      when: inventory_hostname == 'master1'

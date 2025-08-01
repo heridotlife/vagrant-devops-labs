@@ -1,0 +1,104 @@
+---
+- name: Configure Kubernetes cluster to send metrics to monitoring VM
+  hosts: k8scluster
+  become: yes
+  vars:
+    monitoring_vm_ip: "10.0.254.31"
+    prometheus_port: 9090
+
+  tasks:
+    - name: Install Node Exporter for metrics collection
+      apt:
+        name: prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Node Exporter service
+      systemd:
+        name: prometheus-node-exporter
+        state: started
+        enabled: yes
+
+    - name: Configure Node Exporter to listen on all interfaces
+      lineinfile:
+        path: /etc/default/prometheus-node-exporter
+        regexp: '^ARGS='
+        line: 'ARGS="--web.listen-address=:9100"'
+        create: yes
+
+    - name: Restart Node Exporter with new configuration
+      systemd:
+        name: prometheus-node-exporter
+        state: restarted
+
+    - name: Configure firewall to allow Prometheus scraping
+      ufw:
+        rule: allow
+        port: '9100'
+        proto: tcp
+
+    - name: Install and configure kube-state-metrics
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: kube-state-metrics
+            namespace: kube-system
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: kube-state-metrics
+            template:
+              metadata:
+                labels:
+                  app: kube-state-metrics
+              spec:
+                containers:
+                - name: kube-state-metrics
+                  image: k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.5.0
+                  ports:
+                  - containerPort: 8080
+                  livenessProbe:
+                    httpGet:
+                      path: /healthz
+                      port: 8080
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+                  readinessProbe:
+                    httpGet:
+                      path: /
+                      port: 8080
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+      when: inventory_hostname in groups['masters']
+
+    - name: Create Service for kube-state-metrics
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: kube-state-metrics
+            namespace: kube-system
+            labels:
+              app: kube-state-metrics
+          spec:
+            ports:
+            - name: http-metrics
+              port: 8080
+              targetPort: http-metrics
+            selector:
+              app: kube-state-metrics
+      when: inventory_hostname in groups['masters']
+
+    - name: Display monitoring configuration information
+      debug:
+        msg: |
+          Node Exporter configured successfully on {{ inventory_hostname }}
+          - Metrics endpoint: http://{{ ansible_default_ipv4.address }}:9100/metrics
+          - Monitoring VM: {{ monitoring_vm_ip }}:{{ prometheus_port }}
+          - Node Exporter service: {{ ansible_default_ipv4.address }}:9100 

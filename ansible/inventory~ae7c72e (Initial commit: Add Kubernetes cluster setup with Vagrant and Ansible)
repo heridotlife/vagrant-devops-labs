@@ -1,0 +1,16 @@
+[masters]
+master1 ansible_host=10.0.254.11 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+master2 ansible_host=10.0.254.12 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+master3 ansible_host=10.0.254.13 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+
+[workers]
+worker1 ansible_host=10.0.254.21 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+worker2 ansible_host=10.0.254.22 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+worker3 ansible_host=10.0.254.23 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+
+[monitoring]
+monitoring ansible_host=10.0.254.31 ansible_python_interpreter=/usr/bin/python3 ansible_user=vagrant ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+
+[k8scluster:children]
+masters
+workers

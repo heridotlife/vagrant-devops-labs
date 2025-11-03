@@ -1,0 +1,17 @@
+---
+#############################################################################
+# Common Role - Handlers
+#############################################################################
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Restart chronyd
+  systemd:
+    name: chronyd
+    state: restarted
+
+- name: Reload firewalld
+  command: firewall-cmd --reload
+  when: firewall_enabled | default(true) | bool

@@ -1,0 +1,75 @@
+---
+#############################################################################
+# Common Role - Base System Configuration
+#############################################################################
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Set hostname
+  hostname:
+    name: "{{ ansible_hostname }}"
+
+- name: Update /etc/hosts with all cluster nodes
+  lineinfile:
+    path: /etc/hosts
+    regexp: "^{{ hostvars[item].ansible_host }}.*{{ item }}"
+    line: "{{ hostvars[item].ansible_host }} {{ item }}"
+    state: present
+  loop: "{{ groups['k8s_cluster'] }}"
+  when: hostvars[item].ansible_host is defined
+
+- name: Disable unnecessary services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - postfix
+  failed_when: false
+  # Fail silently if service doesn't exist
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/kubernetes
+    - /etc/kubernetes/pki
+    - /etc/kubernetes/manifests
+    - /var/lib/kubernetes
+    - /var/log/kubernetes
+    - /opt/cni/bin
+    - /etc/cni/net.d
+
+- name: Create Kubernetes user
+  user:
+    name: kubernetes
+    comment: "Kubernetes Service User"
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+
+- name: Configure systemd
+  lineinfile:
+    path: /etc/systemd/system.conf
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: "DefaultLimitNOFILE", value: "65536" }
+    - { key: "DefaultLimitNPROC", value: "65536" }
+  notify: Reload systemd
+
+- name: Set ulimits for all users
+  pam_limits:
+    domain: "*"
+    limit_type: "{{ item.type }}"
+    limit_item: "{{ item.item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { type: "soft", item: "nofile", value: "65536" }
+    - { type: "hard", item: "nofile", value: "65536" }
+    - { type: "soft", item: "nproc", value: "65536" }
+    - { type: "hard", item: "nproc", value: "65536" }

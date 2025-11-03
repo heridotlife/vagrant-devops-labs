@@ -1,0 +1,65 @@
+---
+#############################################################################
+# Group Variables - All Hosts
+#############################################################################
+
+# Cluster configuration
+cluster_name: "{{ lookup('env', 'CLUSTER_NAME') | default('k8s-lab', true) }}"
+k8s_version: "{{ lookup('env', 'K8S_VERSION') | default('1.31.0', true) }}"
+
+# Component versions
+etcd_version: "{{ lookup('env', 'ETCD_VERSION') | default('3.5.11', true) }}"
+containerd_version: "{{ lookup('env', 'CONTAINERD_VERSION') | default('1.7.13', true) }}"
+runc_version: "{{ lookup('env', 'RUNC_VERSION') | default('1.1.10', true) }}"
+cni_plugins_version: "{{ lookup('env', 'CNI_PLUGINS_VERSION') | default('1.4.0', true) }}"
+calico_version: "{{ lookup('env', 'CALICO_VERSION') | default('v3.27.0', true) }}"
+coredns_version: "{{ lookup('env', 'COREDNS_VERSION') | default('1.11.1', true) }}"
+metallb_version: "{{ lookup('env', 'METALLB_VERSION') | default('v0.14.3', true) }}"
+
+# Network configuration
+pod_cidr: "{{ lookup('env', 'POD_CIDR') | default('10.244.0.0/16', true) }}"
+service_cidr: "{{ lookup('env', 'SERVICE_CIDR') | default('10.96.0.0/16', true) }}"
+cluster_dns: "{{ lookup('env', 'CLUSTER_DNS') | default('10.96.0.10', true) }}"
+cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('cluster.local', true) }}"
+
+# MetalLB configuration
+metallb_ip_start: "{{ lookup('env', 'METALLB_IP_START') | default('10.240.0.200', true) }}"
+metallb_ip_end: "{{ lookup('env', 'METALLB_IP_END') | default('10.240.0.220', true) }}"
+
+# Container runtime
+container_runtime: "{{ lookup('env', 'CONTAINER_RUNTIME') | default('containerd', true) }}"
+container_runtime_endpoint: "{{ lookup('env', 'CONTAINER_RUNTIME_ENDPOINT') | default('unix:///var/run/containerd/containerd.sock', true) }}"
+cgroup_driver: "{{ lookup('env', 'CGROUP_DRIVER') | default('systemd', true) }}"
+
+# CNI configuration
+cni_plugin: "{{ lookup('env', 'CNI_PLUGIN') | default('calico', true) }}"
+calico_backend: "{{ lookup('env', 'CALICO_BACKEND') | default('vxlan', true) }}"
+
+# PKI configuration
+cert_validity_days: "{{ lookup('env', 'CERT_VALIDITY_DAYS') | default('3650', true) }}"
+
+# Storage
+storage_provisioner: "{{ lookup('env', 'STORAGE_PROVISIONER') | default('local-path', true) }}"
+default_storage_class: "{{ lookup('env', 'DEFAULT_STORAGE_CLASS') | default('local-path', true) }}"
+
+# Paths
+k8s_bin_dir: /usr/local/bin
+k8s_config_dir: /etc/kubernetes
+k8s_pki_dir: /etc/kubernetes/pki
+k8s_manifests_dir: /etc/kubernetes/manifests
+k8s_lib_dir: /var/lib/kubernetes
+k8s_log_dir: /var/log/kubernetes
+cni_bin_dir: /opt/cni/bin
+cni_conf_dir: /etc/cni/net.d
+
+# Service configuration
+service_node_port_range: "{{ lookup('env', 'SERVICE_NODE_PORT_RANGE') | default('30000-32767', true) }}"
+max_pods_per_node: "{{ lookup('env', 'MAX_PODS_PER_NODE') | default('110', true) }}"
+
+# Feature flags
+enable_encryption_at_rest: "{{ lookup('env', 'ENABLE_ENCRYPTION_AT_REST') | default('true', true) | bool }}"
+enable_audit_logging: "{{ lookup('env', 'ENABLE_AUDIT_LOGGING') | default('false', true) | bool }}"
+
+# Download mirrors (for faster downloads in some regions)
+kubernetes_download_url: "https://dl.k8s.io/release"
+github_download_url: "https://github.com"

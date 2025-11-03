@@ -1,0 +1,81 @@
+---
+#############################################################################
+# Common Role - Default Variables
+#############################################################################
+
+# Base packages to install on all nodes
+common_packages:
+  - curl
+  - wget
+  - tar
+  - git
+  - vim
+  - net-tools
+  - bind-utils
+  - socat
+  - conntrack
+  - ipset
+  - jq
+  - yum-utils
+  - device-mapper-persistent-data
+  - lvm2
+  - bash-completion
+  - chrony
+
+# Kernel modules to load
+kernel_modules:
+  - overlay
+  - br_netfilter
+
+# Sysctl parameters for Kubernetes
+sysctl_params:
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+  net.ipv4.ip_forward: 1
+  net.ipv4.conf.all.forwarding: 1
+  net.ipv6.conf.all.forwarding: 1
+  net.ipv4.tcp_congestion_control: bbr
+  vm.overcommit_memory: 1
+  kernel.panic: 10
+  kernel.panic_on_oops: 1
+
+# Firewall ports for Kubernetes
+# Master node ports
+firewall_ports_master:
+  - 6443/tcp    # Kubernetes API server
+  - 2379-2380/tcp  # etcd server client API
+  - 10250/tcp   # Kubelet API
+  - 10251/tcp   # kube-scheduler
+  - 10252/tcp   # kube-controller-manager
+
+# Worker node ports
+firewall_ports_worker:
+  - 10250/tcp   # Kubelet API
+  - 30000-32767/tcp  # NodePort Services
+
+# Common ports (all nodes)
+firewall_ports_common:
+  - 179/tcp     # Calico BGP (if using BGP)
+  - 4789/udp    # Calico VXLAN
+  - 5473/tcp    # Calico Typha
+
+# Timezone
+timezone: UTC
+
+# NTP servers
+ntp_servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+  - 2.pool.ntp.org
+  - 3.pool.ntp.org
+
+# SELinux mode (enforcing, permissive, disabled)
+# Note: Kubernetes requires permissive or disabled
+selinux_mode: permissive
+
+# Swap management
+disable_swap: true
+
+# Firewall management
+manage_firewall: true
+firewall_enabled: true

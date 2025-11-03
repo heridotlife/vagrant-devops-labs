@@ -1,0 +1,44 @@
+---
+#############################################################################
+# Common Role - SELinux Configuration
+#############################################################################
+
+- name: Check current SELinux status
+  command: getenforce
+  register: selinux_status
+  changed_when: false
+  failed_when: false
+
+- name: Display current SELinux status
+  debug:
+    msg: "Current SELinux status: {{ selinux_status.stdout }}"
+
+- name: Set SELinux to permissive mode immediately
+  command: setenforce 0
+  when:
+    - selinux_mode in ['permissive', 'disabled']
+    - selinux_status.stdout == 'Enforcing'
+  changed_when: true
+  failed_when: false
+
+- name: Set SELinux to permissive mode persistently
+  selinux:
+    policy: targeted
+    state: "{{ selinux_mode }}"
+  when: selinux_mode in ['permissive', 'disabled']
+
+- name: Verify SELinux configuration
+  command: getenforce
+  register: selinux_verify
+  changed_when: false
+
+- name: Display SELinux configuration
+  debug:
+    msg: "SELinux is now: {{ selinux_verify.stdout }}"
+
+- name: Warn about reboot if SELinux mode changed to disabled
+  debug:
+    msg: "WARNING: SELinux mode changed to disabled. A reboot may be required for full effect."
+  when:
+    - selinux_mode == 'disabled'
+    - selinux_status.stdout == 'Enforcing'

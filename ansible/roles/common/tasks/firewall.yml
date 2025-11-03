@@ -1,0 +1,79 @@
+---
+#############################################################################
+# Common Role - Firewall Configuration
+#############################################################################
+
+- name: Install firewalld
+  yum:
+    name: firewalld
+    state: present
+  when: firewall_enabled | bool
+
+- name: Start and enable firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: true
+  when: firewall_enabled | bool
+
+- name: Configure firewall - Allow common ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: "{{ firewall_ports_common }}"
+  when: firewall_enabled | bool
+
+- name: Configure firewall - Allow master-specific ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: "{{ firewall_ports_master }}"
+  when:
+    - firewall_enabled | bool
+    - inventory_hostname in groups['masters']
+
+- name: Configure firewall - Allow worker-specific ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: "{{ firewall_ports_worker }}"
+  when:
+    - firewall_enabled | bool
+    - inventory_hostname in groups['workers']
+
+- name: Allow traffic from cluster network
+  firewalld:
+    source: "{{ item }}"
+    zone: trusted
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 10.240.0.0/24  # Host network
+    - 10.244.0.0/16  # Pod network
+    - 10.96.0.0/16   # Service network
+  when: firewall_enabled | bool
+
+- name: Reload firewalld
+  command: firewall-cmd --reload
+  when: firewall_enabled | bool
+  changed_when: false
+
+- name: Display firewall status
+  command: firewall-cmd --list-all
+  register: firewall_status
+  changed_when: false
+  when: firewall_enabled | bool
+
+- name: Show firewall configuration
+  debug:
+    var: firewall_status.stdout_lines
+  when:
+    - firewall_enabled | bool
+    - firewall_status is defined

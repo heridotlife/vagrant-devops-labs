@@ -1,0 +1,53 @@
+---
+#############################################################################
+# Main Playbook - Site-wide Configuration
+#############################################################################
+# This playbook orchestrates the complete Kubernetes cluster setup
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini playbooks/site.yml
+#
+#############################################################################
+
+- name: Kubernetes Lab - Complete Setup
+  hosts: k8s_cluster
+  gather_facts: true
+  become: true
+
+  pre_tasks:
+    - name: Display playbook information
+      debug:
+        msg:
+          - "═══════════════════════════════════════════════════════"
+          - "  Kubernetes Lab - Cluster Setup"
+          - "═══════════════════════════════════════════════════════"
+          - "  Cluster: {{ cluster_name }}"
+          - "  Kubernetes: {{ k8s_version }}"
+          - "  Nodes: {{ groups['masters'] | length }} master(s), {{ groups['workers'] | length }} worker(s)"
+          - "═══════════════════════════════════════════════════════"
+      run_once: true
+
+    - name: Gather facts from all nodes
+      setup:
+        gather_subset:
+          - 'all'
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: "Common configuration completed on {{ ansible_hostname }}"
+
+# Additional playbooks will be included here as we build them
+# - import_playbook: pki.yml
+# - import_playbook: container-runtime.yml
+# - import_playbook: etcd.yml
+# - import_playbook: control-plane.yml
+# - import_playbook: workers.yml
+# - import_playbook: network.yml
+# - import_playbook: dns.yml
+# - import_playbook: loadbalancer.yml
+# - import_playbook: storage.yml

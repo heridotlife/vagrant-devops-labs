@@ -1,0 +1,46 @@
+---
+#############################################################################
+# Common Role - Package Installation
+#############################################################################
+
+- name: Update package cache
+  yum:
+    update_cache: true
+  retries: 3
+  delay: 10
+
+- name: Upgrade all packages
+  yum:
+    name: "*"
+    state: latest
+    exclude: kernel*
+  retries: 3
+  delay: 10
+  when: false  # Disabled by default for faster provisioning
+
+- name: Install EPEL repository
+  yum:
+    name: epel-release
+    state: present
+
+- name: Install base packages
+  yum:
+    name: "{{ common_packages }}"
+    state: present
+  retries: 3
+  delay: 10
+
+- name: Install Python packages for Ansible
+  yum:
+    name:
+      - python3
+      - python3-pip
+      - python3-setuptools
+    state: present
+
+- name: Install useful Python modules
+  pip:
+    name:
+      - jmespath  # Required for json_query filter
+    state: present
+    executable: pip3

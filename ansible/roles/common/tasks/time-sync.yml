@@ -1,0 +1,44 @@
+---
+#############################################################################
+# Common Role - Time Synchronization
+#############################################################################
+
+- name: Ensure chrony is installed
+  yum:
+    name: chrony
+    state: present
+
+- name: Configure chrony NTP servers
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    mode: '0644'
+  notify: Restart chronyd
+
+- name: Start and enable chronyd
+  systemd:
+    name: chronyd
+    state: started
+    enabled: true
+
+- name: Wait for time synchronization
+  pause:
+    seconds: 5
+
+- name: Check time synchronization status
+  command: chronyc tracking
+  register: chrony_tracking
+  changed_when: false
+
+- name: Display time synchronization status
+  debug:
+    var: chrony_tracking.stdout_lines
+
+- name: Verify system time
+  command: timedatectl
+  register: timedatectl_output
+  changed_when: false
+
+- name: Display system time
+  debug:
+    var: timedatectl_output.stdout_lines

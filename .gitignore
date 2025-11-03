@@ -160,3 +160,70 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Vagrant
+.vagrant/
+
+# Kubernetes
+*.kubeconfig
+kubeconfig
+.kube/
+
+# Ansible
+*.retry
+*.pyc
+__pycache__/
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Terraform (if used in future)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Docker
+.dockerignore
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Cache files (keep directory structure, ignore actual files)
+cache/*.deb
+cache/*.tar.gz
+cache/*/kubeadm
+cache/*/kubelet
+cache/*/kubectl
+cache/*/crictl
+cache/*.txt

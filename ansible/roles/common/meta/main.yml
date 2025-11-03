@@ -1,0 +1,24 @@
+---
+#############################################################################
+# Common Role - Metadata
+#############################################################################
+
+galaxy_info:
+  author: Kubernetes Lab
+  description: Base system configuration for Kubernetes nodes
+  company: Self
+  license: MIT
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: EL
+      versions:
+        - "9"
+
+  galaxy_tags:
+    - kubernetes
+    - k8s
+    - centos
+    - system
+
+dependencies: []

@@ -1,0 +1,48 @@
+---
+#############################################################################
+# Common Role - Kernel Configuration
+#############################################################################
+
+- name: Load kernel modules
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ kernel_modules }}"
+
+- name: Persist kernel modules
+  template:
+    src: modules-load.conf.j2
+    dest: /etc/modules-load.d/k8s.conf
+    mode: '0644'
+
+- name: Configure sysctl parameters
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/k8s.conf
+    reload: true
+  loop: "{{ sysctl_params | dict2items }}"
+
+- name: Reload sysctl
+  command: sysctl --system
+  changed_when: false
+
+- name: Verify kernel modules are loaded
+  command: lsmod
+  register: lsmod_output
+  changed_when: false
+
+- name: Check if overlay module is loaded
+  assert:
+    that:
+      - "'overlay' in lsmod_output.stdout"
+    fail_msg: "overlay module not loaded"
+    success_msg: "overlay module loaded successfully"
+
+- name: Check if br_netfilter module is loaded
+  assert:
+    that:
+      - "'br_netfilter' in lsmod_output.stdout"
+    fail_msg: "br_netfilter module not loaded"
+    success_msg: "br_netfilter module loaded successfully"

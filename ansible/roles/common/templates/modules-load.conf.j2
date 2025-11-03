@@ -1,0 +1,6 @@
+# Kernel modules for Kubernetes
+# Managed by Ansible - do not edit manually
+
+{% for module in kernel_modules %}
+{{ module }}
+{% endfor %}

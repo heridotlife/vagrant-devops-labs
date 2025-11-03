@@ -1,0 +1,40 @@
+---
+#############################################################################
+# Common Role - Swap Management
+#############################################################################
+
+- name: Check current swap status
+  command: swapon --show
+  register: swap_status
+  changed_when: false
+  failed_when: false
+
+- name: Display current swap status
+  debug:
+    msg: "Current swap: {{ swap_status.stdout if swap_status.stdout else 'No swap enabled' }}"
+
+- name: Disable swap immediately
+  command: swapoff -a
+  when:
+    - disable_swap | bool
+    - swap_status.stdout != ""
+  changed_when: true
+
+- name: Remove swap from fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+  when: disable_swap | bool
+
+- name: Verify swap is disabled
+  command: swapon --show
+  register: swap_verify
+  changed_when: false
+  failed_when: swap_verify.stdout != ""
+  when: disable_swap | bool
+
+- name: Display swap status
+  debug:
+    msg: "Swap successfully disabled"
+  when: disable_swap | bool

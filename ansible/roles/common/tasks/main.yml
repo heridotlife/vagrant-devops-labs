@@ -1,0 +1,55 @@
+---
+#############################################################################
+# Common Role - Main Tasks
+#############################################################################
+
+- name: Display node information
+  debug:
+    msg: "Configuring node: {{ ansible_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})"
+
+- name: Include preflight checks
+  include_tasks: preflight.yml
+  tags:
+    - preflight
+    - always
+
+- name: Configure base system
+  include_tasks: base-system.yml
+  tags:
+    - base-system
+
+- name: Install base packages
+  include_tasks: packages.yml
+  tags:
+    - packages
+
+- name: Configure kernel parameters
+  include_tasks: kernel.yml
+  tags:
+    - kernel
+
+- name: Configure swap
+  include_tasks: swap.yml
+  tags:
+    - swap
+
+- name: Configure SELinux
+  include_tasks: selinux.yml
+  when: ansible_os_family == "RedHat"
+  tags:
+    - selinux
+
+- name: Configure firewall
+  include_tasks: firewall.yml
+  when: manage_firewall | bool
+  tags:
+    - firewall
+
+- name: Configure time synchronization
+  include_tasks: time-sync.yml
+  tags:
+    - time-sync
+
+- name: Display completion message
+  debug:
+    msg: "Common configuration completed for {{ ansible_hostname }}"

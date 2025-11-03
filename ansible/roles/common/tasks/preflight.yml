@@ -1,0 +1,52 @@
+---
+#############################################################################
+# Common Role - Preflight Checks
+#############################################################################
+
+- name: Check if running on supported OS
+  assert:
+    that:
+      - ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
+      - ansible_distribution_major_version == "9"
+    fail_msg: "This role only supports CentOS Stream 9 or Rocky Linux 9"
+    success_msg: "OS check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+- name: Check if running as root or with sudo
+  assert:
+    that:
+      - ansible_user_uid == 0 or ansible_become
+    fail_msg: "This playbook must be run as root or with sudo privileges"
+    success_msg: "Privilege check passed"
+
+- name: Check minimum RAM
+  assert:
+    that:
+      - ansible_memtotal_mb >= 1024
+    fail_msg: "Minimum 1GB RAM required (found {{ ansible_memtotal_mb }}MB)"
+    success_msg: "RAM check passed: {{ ansible_memtotal_mb }}MB"
+
+- name: Check minimum CPU cores
+  assert:
+    that:
+      - ansible_processor_vcpus >= 2
+    fail_msg: "Minimum 2 CPU cores required (found {{ ansible_processor_vcpus }})"
+    success_msg: "CPU check passed: {{ ansible_processor_vcpus }} cores"
+
+- name: Check disk space
+  assert:
+    that:
+      - item.size_available > 10737418240  # 10GB in bytes
+    fail_msg: "Minimum 10GB disk space required on {{ item.mount }}"
+    success_msg: "Disk space check passed for {{ item.mount }}"
+  loop: "{{ ansible_mounts }}"
+  when: item.mount == '/'
+
+- name: Display system information
+  debug:
+    msg:
+      - "Hostname: {{ ansible_hostname }}"
+      - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      - "Kernel: {{ ansible_kernel }}"
+      - "CPUs: {{ ansible_processor_vcpus }}"
+      - "RAM: {{ ansible_memtotal_mb }}MB"
+      - "IP: {{ ansible_default_ipv4.address }}"

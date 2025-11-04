@@ -1,0 +1,78 @@
+---
+#############################################################################
+# kubelet Role - Default Variables
+#############################################################################
+
+# Kubernetes version
+k8s_version: "{{ k8s_version | default('1.31.0') }}"
+
+# Download URLs
+k8s_download_url: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64"
+
+# Installation paths
+k8s_bin_dir: /usr/local/bin
+k8s_config_dir: /etc/kubernetes
+k8s_pki_dir: "{{ k8s_config_dir }}/pki"
+kubelet_config_dir: /var/lib/kubelet
+
+# Kubelet configuration
+kubelet_bind_address: "0.0.0.0"
+kubelet_port: 10250
+kubelet_read_only_port: 0  # Disable read-only port for security
+
+# Cluster configuration
+cluster_name: "{{ cluster_name | default('kubernetes') }}"
+cluster_dns: "10.96.0.10"
+cluster_domain: "cluster.local"
+
+# Pod CIDR
+pod_cidr: "10.244.0.0/16"
+
+# TLS configuration
+client_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+tls_cert_file: "{{ k8s_pki_dir }}/{{ ansible_hostname }}.crt"
+tls_private_key_file: "{{ k8s_pki_dir }}/{{ ansible_hostname }}.key"
+
+# Kubeconfig
+kubeconfig_path: "{{ kubelet_config_dir }}/kubeconfig"
+
+# Kubelet config
+kubelet_config_path: "{{ kubelet_config_dir }}/kubelet-config.yaml"
+
+# Container runtime
+container_runtime_endpoint: "unix:///var/run/containerd/containerd.sock"
+
+# Feature gates
+kubelet_feature_gates: ""
+
+# Node labels
+node_labels: {}
+
+# Node taints (for masters)
+node_taints: []
+
+# Resource reservations
+kube_reserved:
+  cpu: "100m"
+  memory: "256Mi"
+  ephemeral-storage: "1Gi"
+
+system_reserved:
+  cpu: "100m"
+  memory: "256Mi"
+  ephemeral-storage: "1Gi"
+
+# Eviction thresholds
+eviction_hard:
+  memory.available: "100Mi"
+  nodefs.available: "10%"
+  nodefs.inodesFree: "5%"
+
+# Logging
+kubelet_log_level: 2
+
+# Extra arguments
+kubelet_extra_args: {}
+
+# Directories
+kubelet_pod_manifest_path: "{{ k8s_config_dir }}/manifests"

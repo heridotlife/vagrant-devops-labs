@@ -1,0 +1,27 @@
+---
+#############################################################################
+# kube-scheduler - Service Management Tasks
+#############################################################################
+
+- name: Enable kube-scheduler service
+  systemd:
+    name: kube-scheduler
+    enabled: yes
+    state: started
+
+- name: Wait for kube-scheduler to be ready
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ scheduler_secure_port }}"
+    timeout: 60
+
+- name: Check kube-scheduler service status
+  systemd:
+    name: kube-scheduler
+  register: scheduler_status
+
+- name: Display service status
+  debug:
+    msg:
+      - "kube-scheduler service status: {{ scheduler_status.status.ActiveState }}"
+      - "Service enabled: {{ scheduler_status.status.UnitFileState }}"

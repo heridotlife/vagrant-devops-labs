@@ -1,0 +1,16 @@
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+bindAddress: {{ proxy_bind_address }}
+clientConnection:
+  kubeconfig: {{ kubeconfig_path }}
+clusterCIDR: {{ cluster_cidr }}
+mode: {{ proxy_mode }}
+hostnameOverride: {{ ansible_hostname }}
+iptables:
+  masqueradeBit: {{ iptables_masquerade_bit }}
+  syncPeriod: {{ iptables_sync_period }}
+conntrack:
+  maxPerCore: {{ conntrack_max_per_core }}
+  min: {{ conntrack_min }}
+metricsBindAddress: 0.0.0.0:{{ proxy_metrics_port }}
+healthzBindAddress: 0.0.0.0:{{ proxy_healthz_port }}

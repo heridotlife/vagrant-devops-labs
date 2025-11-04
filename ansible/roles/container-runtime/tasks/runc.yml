@@ -1,0 +1,33 @@
+---
+#############################################################################
+# Container Runtime - runc Installation
+#############################################################################
+
+- name: Download runc binary
+  get_url:
+    url: "{{ runc_download_url }}"
+    dest: "{{ containerd_bin_dir }}/runc"
+    mode: '0755'
+    timeout: 300
+  when: not runc_installed.stat.exists
+  become: true
+
+- name: Verify runc binary installation
+  stat:
+    path: "{{ containerd_bin_dir }}/runc"
+  register: runc_binary
+
+- name: Display runc binary status
+  debug:
+    msg: "runc binary: {{ 'installed' if runc_binary.stat.exists else 'NOT FOUND' }}"
+
+- name: Get runc version
+  command: "{{ containerd_bin_dir }}/runc --version"
+  register: runc_version_output
+  changed_when: false
+  when: runc_binary.stat.exists
+
+- name: Display runc version
+  debug:
+    msg: "{{ runc_version_output.stdout_lines[0] }}"
+  when: runc_version_output is defined and runc_version_output.stdout_lines | length > 0

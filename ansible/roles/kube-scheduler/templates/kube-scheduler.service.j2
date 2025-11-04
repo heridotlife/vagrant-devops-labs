@@ -1,0 +1,14 @@
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://kubernetes.io/docs/concepts/overview/components/#kube-scheduler
+After=network.target
+
+[Service]
+ExecStart={{ k8s_bin_dir }}/kube-scheduler \
+  --config={{ scheduler_config_path }} \
+  --v={{ scheduler_log_level }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

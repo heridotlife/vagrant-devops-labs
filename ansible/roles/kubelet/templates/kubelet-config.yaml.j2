@@ -1,0 +1,35 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: true
+  x509:
+    clientCAFile: {{ client_ca_file }}
+authorization:
+  mode: Webhook
+clusterDNS:
+  - {{ cluster_dns }}
+clusterDomain: {{ cluster_domain }}
+containerRuntimeEndpoint: {{ container_runtime_endpoint }}
+cgroupDriver: systemd
+resolvConf: /etc/resolv.conf
+runtimeRequestTimeout: 15m
+tlsCertFile: {{ tls_cert_file }}
+tlsPrivateKeyFile: {{ tls_private_key_file }}
+registerNode: true
+staticPodPath: {{ kubelet_pod_manifest_path }}
+podCIDR: {{ pod_cidr }}
+evictionHard:
+{% for key, value in eviction_hard.items() %}
+  {{ key }}: "{{ value }}"
+{% endfor %}
+kubeReserved:
+{% for key, value in kube_reserved.items() %}
+  {{ key }}: "{{ value }}"
+{% endfor %}
+systemReserved:
+{% for key, value in system_reserved.items() %}
+  {{ key }}: "{{ value }}"
+{% endfor %}

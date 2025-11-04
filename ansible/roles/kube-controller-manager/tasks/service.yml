@@ -1,0 +1,27 @@
+---
+#############################################################################
+# kube-controller-manager - Service Management Tasks
+#############################################################################
+
+- name: Enable kube-controller-manager service
+  systemd:
+    name: kube-controller-manager
+    enabled: yes
+    state: started
+
+- name: Wait for kube-controller-manager to be ready
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ controller_manager_secure_port }}"
+    timeout: 60
+
+- name: Check kube-controller-manager service status
+  systemd:
+    name: kube-controller-manager
+  register: controller_manager_status
+
+- name: Display service status
+  debug:
+    msg:
+      - "kube-controller-manager service status: {{ controller_manager_status.status.ActiveState }}"
+      - "Service enabled: {{ controller_manager_status.status.UnitFileState }}"

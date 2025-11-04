@@ -1,0 +1,25 @@
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://kubernetes.io/docs/concepts/overview/components/#kubelet
+After=containerd.service
+Requires=containerd.service
+
+[Service]
+ExecStart={{ k8s_bin_dir }}/kubelet \
+  --config={{ kubelet_config_path }} \
+  --container-runtime-endpoint={{ container_runtime_endpoint }} \
+  --kubeconfig={{ kubeconfig_path }} \
+  --node-ip={{ ansible_default_ipv4.address }} \
+{% if node_labels | length > 0 %}
+  --node-labels={{ node_labels | dict2items | map(attribute='key') | zip(node_labels | dict2items | map(attribute='value')) | map('join', '=') | join(',') }} \
+{% endif %}
+{% if node_taints | length > 0 %}
+  --register-with-taints={{ node_taints | join(',') }} \
+{% endif %}
+  --v={{ kubelet_log_level }}
+Restart=on-failure
+RestartSec=5
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

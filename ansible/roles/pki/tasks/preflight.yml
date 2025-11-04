@@ -1,0 +1,35 @@
+---
+#############################################################################
+# PKI Role - Preflight Checks
+#############################################################################
+
+- name: Ensure OpenSSL is installed
+  package:
+    name: openssl
+    state: present
+  become: true
+
+- name: Create PKI directory
+  file:
+    path: "{{ pki_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Create temporary PKI directory
+  file:
+    path: "{{ pki_temp_dir }}"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Check if CA already exists
+  stat:
+    path: "{{ pki_dir }}/ca.crt"
+  register: ca_exists
+
+- name: Display CA status
+  debug:
+    msg: "CA certificate {{ 'exists' if ca_exists.stat.exists else 'will be created' }}"

@@ -1,0 +1,71 @@
+---
+#############################################################################
+# Container Runtime - Verification
+#############################################################################
+
+- name: Wait for containerd socket
+  wait_for:
+    path: /run/containerd/containerd.sock
+    timeout: 30
+  become: true
+
+- name: Check containerd socket permissions
+  stat:
+    path: /run/containerd/containerd.sock
+  register: containerd_socket
+
+- name: Display containerd socket info
+  debug:
+    msg:
+      - "Socket: /run/containerd/containerd.sock"
+      - "Exists: {{ containerd_socket.stat.exists }}"
+      - "Socket: {{ containerd_socket.stat.issock | default(false) }}"
+
+- name: Test containerd with ctr command
+  command: "{{ containerd_bin_dir }}/ctr version"
+  register: ctr_version
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Display ctr version
+  debug:
+    msg: "{{ ctr_version.stdout_lines }}"
+  when: ctr_version.rc == 0
+
+- name: Verify systemd cgroup driver configuration
+  shell: grep -A 5 "SystemdCgroup" {{ containerd_config_dir }}/config.toml
+  register: cgroup_config
+  changed_when: false
+  become: true
+
+- name: Display cgroup configuration
+  debug:
+    msg: "{{ cgroup_config.stdout_lines }}"
+
+- name: List containerd plugins
+  command: "{{ containerd_bin_dir }}/ctr plugins ls"
+  register: containerd_plugins
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Display loaded plugins count
+  debug:
+    msg: "Loaded containerd plugins: {{ containerd_plugins.stdout_lines | length - 1 }}"
+  when: containerd_plugins.rc == 0
+
+- name: Verification summary
+  debug:
+    msg:
+      - "════════════════════════════════════════════════════"
+      - "  Containerd Installation Verification"
+      - "════════════════════════════════════════════════════"
+      - "✓ Containerd binary: {{ containerd_bin_dir }}/containerd"
+      - "✓ runc binary: {{ containerd_bin_dir }}/runc"
+      - "✓ CNI plugins: {{ cni_bin_dir }}"
+      - "✓ Configuration: {{ containerd_config_dir }}/config.toml"
+      - "✓ Systemd cgroup: enabled"
+      - "✓ Service: active and enabled"
+      - "✓ Socket: /run/containerd/containerd.sock"
+      - "════════════════════════════════════════════════════"

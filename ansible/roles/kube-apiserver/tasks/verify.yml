@@ -1,0 +1,43 @@
+---
+#############################################################################
+# kube-apiserver - Verification Tasks
+#############################################################################
+
+- name: Check if kube-apiserver is listening
+  wait_for:
+    host: "{{ apiserver_bind_address }}"
+    port: "{{ apiserver_secure_port }}"
+    timeout: 60
+
+- name: Get API server component status
+  uri:
+    url: "https://{{ apiserver_advertise_address }}:{{ apiserver_secure_port }}/healthz"
+    validate_certs: no
+    return_content: yes
+  register: healthz_check
+  failed_when: healthz_check.status != 200
+  retries: 5
+  delay: 5
+
+- name: Display health check result
+  debug:
+    msg:
+      - "API Server health check: {{ healthz_check.content }}"
+      - "Status code: {{ healthz_check.status }}"
+
+- name: Verify kube-apiserver process
+  command: pgrep -f kube-apiserver
+  register: apiserver_process
+  changed_when: false
+  failed_when: apiserver_process.rc != 0
+
+- name: Display verification summary
+  debug:
+    msg:
+      - "════════════════════════════════════════"
+      - "  kube-apiserver Verification Complete"
+      - "════════════════════════════════════════"
+      - "Status: Running"
+      - "Port: {{ apiserver_secure_port }}"
+      - "Health: OK"
+      - "Process ID: {{ apiserver_process.stdout }}"

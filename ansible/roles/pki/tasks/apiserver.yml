@@ -1,0 +1,123 @@
+---
+#############################################################################
+# PKI Role - API Server Certificate Generation
+#############################################################################
+
+- name: Calculate Kubernetes service IP (first IP in service CIDR)
+  set_fact:
+    kubernetes_service_ip: "{{ service_cidr | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
+  when: service_cidr is defined
+
+- name: Gather all IPv4 addresses from all interfaces
+  set_fact:
+    all_ipv4_addresses: "{{ ansible_all_ipv4_addresses }}"
+
+- name: Build API server certificate SANs
+  set_fact:
+    apiserver_sans:
+      dns: "{{ apiserver_cert_sans.dns + [inventory_hostname, ansible_hostname, ansible_fqdn] }}"
+      ips: "{{ (apiserver_cert_sans.ips + all_ipv4_addresses + ([kubernetes_service_ip] if kubernetes_service_ip is defined else [])) | unique }}"
+
+- name: Generate API server private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/apiserver.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate API server CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/apiserver.csr"
+    privatekey_path: "{{ pki_dir }}/apiserver.key"
+    common_name: "{{ certs.apiserver.common_name }}"
+    organization_name: "{{ certs.apiserver.organization }}"
+    subject_alt_name: "{{ ( apiserver_sans.dns | map('regex_replace', '^', 'DNS:') | list ) + ( apiserver_sans.ips | map('regex_replace', '^', 'IP:') | list ) }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  become: true
+
+- name: Generate API server certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/apiserver.crt"
+    csr_path: "{{ pki_temp_dir }}/apiserver.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Generate API server kubelet client private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/apiserver-kubelet-client.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate API server kubelet client CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/apiserver-kubelet-client.csr"
+    privatekey_path: "{{ pki_dir }}/apiserver-kubelet-client.key"
+    common_name: "{{ certs.apiserver_kubelet_client.common_name }}"
+    organization_name: "{{ certs.apiserver_kubelet_client.organization }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+  become: true
+
+- name: Generate API server kubelet client certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/apiserver-kubelet-client.crt"
+    csr_path: "{{ pki_temp_dir }}/apiserver-kubelet-client.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Generate API server etcd client private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/apiserver-etcd-client.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate API server etcd client CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/apiserver-etcd-client.csr"
+    privatekey_path: "{{ pki_dir }}/apiserver-etcd-client.key"
+    common_name: "kube-apiserver-etcd-client"
+    organization_name: "system:masters"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+  become: true
+
+- name: Generate API server etcd client certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/apiserver-etcd-client.crt"
+    csr_path: "{{ pki_temp_dir }}/apiserver-etcd-client.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Display API server certificate SANs
+  debug:
+    msg:
+      - "DNS SANs: {{ apiserver_sans.dns | join(', ') }}"
+      - "IP SANs: {{ apiserver_sans.ips | join(', ') }}"

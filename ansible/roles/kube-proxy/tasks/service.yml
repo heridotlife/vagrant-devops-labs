@@ -1,0 +1,27 @@
+---
+#############################################################################
+# kube-proxy - Service Management Tasks
+#############################################################################
+
+- name: Enable kube-proxy service
+  systemd:
+    name: kube-proxy
+    enabled: yes
+    state: started
+
+- name: Wait for kube-proxy to be ready
+  wait_for:
+    host: "127.0.0.1"
+    port: "{{ proxy_healthz_port }}"
+    timeout: 60
+
+- name: Check kube-proxy service status
+  systemd:
+    name: kube-proxy
+  register: kube_proxy_status
+
+- name: Display service status
+  debug:
+    msg:
+      - "kube-proxy service status: {{ kube_proxy_status.status.ActiveState }}"
+      - "Service enabled: {{ kube_proxy_status.status.UnitFileState }}"

@@ -1,0 +1,37 @@
+---
+#############################################################################
+# kube-proxy - Verification Tasks
+#############################################################################
+
+- name: Check if kube-proxy is listening
+  wait_for:
+    host: "127.0.0.1"
+    port: "{{ proxy_healthz_port }}"
+    timeout: 30
+
+- name: Verify kube-proxy process
+  command: pgrep -f kube-proxy
+  register: kube_proxy_process
+  changed_when: false
+  failed_when: kube_proxy_process.rc != 0
+
+- name: Check kube-proxy health endpoint
+  uri:
+    url: "http://127.0.0.1:{{ proxy_healthz_port }}/healthz"
+    return_content: yes
+  register: healthz_check
+  failed_when: healthz_check.status != 200
+  retries: 5
+  delay: 5
+
+- name: Display verification summary
+  debug:
+    msg:
+      - "════════════════════════════════════"
+      - "  kube-proxy Verification Complete"
+      - "════════════════════════════════════"
+      - "Node: {{ ansible_hostname }}"
+      - "Status: Running"
+      - "Health Port: {{ proxy_healthz_port }}"
+      - "Proxy Mode: {{ proxy_mode }}"
+      - "Process ID: {{ kube_proxy_process.stdout }}"

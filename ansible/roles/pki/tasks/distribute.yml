@@ -1,0 +1,46 @@
+---
+#############################################################################
+# PKI Role - Certificate Distribution
+#############################################################################
+# Distribute CA certificate to all nodes
+#############################################################################
+
+- name: Fetch CA certificate from master
+  fetch:
+    src: "{{ pki_dir }}/ca.crt"
+    dest: "/tmp/k8s-ca.crt"
+    flat: yes
+  when: inventory_hostname == groups['masters'][0]
+  become: true
+
+- name: Fetch CA key from master
+  fetch:
+    src: "{{ pki_dir }}/ca.key"
+    dest: "/tmp/k8s-ca.key"
+    flat: yes
+  when: inventory_hostname == groups['masters'][0]
+  become: true
+
+- name: Distribute CA certificate to all nodes
+  copy:
+    src: "/tmp/k8s-ca.crt"
+    dest: "{{ pki_dir }}/ca.crt"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  when: inventory_hostname != groups['masters'][0]
+
+- name: Distribute CA key to all nodes (for certificate generation)
+  copy:
+    src: "/tmp/k8s-ca.key"
+    dest: "{{ pki_dir }}/ca.key"
+    mode: '0600'
+    owner: root
+    group: root
+  become: true
+  when: inventory_hostname != groups['masters'][0]
+
+- name: Display distribution status
+  debug:
+    msg: "CA certificate and key distributed to {{ inventory_hostname }}"

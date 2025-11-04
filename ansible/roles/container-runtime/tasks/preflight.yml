@@ -1,0 +1,49 @@
+---
+#############################################################################
+# Container Runtime - Preflight Checks
+#############################################################################
+
+- name: Check if containerd is already installed
+  stat:
+    path: "{{ containerd_bin_dir }}/containerd"
+  register: containerd_installed
+
+- name: Display containerd installation status
+  debug:
+    msg: "Containerd is {{ 'already installed' if containerd_installed.stat.exists else 'not installed' }}"
+
+- name: Check if runc is already installed
+  stat:
+    path: "{{ containerd_bin_dir }}/runc"
+  register: runc_installed
+
+- name: Create required directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ containerd_config_dir }}"
+    - "{{ cni_bin_dir }}"
+    - "{{ cni_config_dir }}"
+    - "/var/lib/containerd"
+    - "/run/containerd"
+  become: true
+
+- name: Ensure required kernel modules are loaded
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+  become: true
+
+- name: Verify kernel modules
+  shell: lsmod | grep -E 'overlay|br_netfilter'
+  register: kernel_modules
+  changed_when: false
+
+- name: Display loaded kernel modules
+  debug:
+    msg: "{{ kernel_modules.stdout_lines }}"

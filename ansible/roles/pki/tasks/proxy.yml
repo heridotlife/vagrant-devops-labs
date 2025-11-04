@@ -1,0 +1,46 @@
+---
+#############################################################################
+# PKI Role - Kube-Proxy Certificate Generation
+#############################################################################
+
+- name: Generate kube-proxy private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/kube-proxy.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate kube-proxy CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/kube-proxy.csr"
+    privatekey_path: "{{ pki_dir }}/kube-proxy.key"
+    common_name: "{{ certs.proxy.common_name }}"
+    organization_name: "{{ certs.proxy.organization }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+  become: true
+
+- name: Generate kube-proxy certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/kube-proxy.crt"
+    csr_path: "{{ pki_temp_dir }}/kube-proxy.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Display kube-proxy certificate info
+  shell: openssl x509 -in {{ pki_dir }}/kube-proxy.crt -noout -subject
+  register: proxy_cert_info
+  changed_when: false
+  become: true
+
+- name: Show kube-proxy certificate details
+  debug:
+    msg: "{{ proxy_cert_info.stdout }}"

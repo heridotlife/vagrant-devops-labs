@@ -1,0 +1,56 @@
+---
+#############################################################################
+# PKI Role - Main Tasks
+#############################################################################
+# Generate all certificates required for Kubernetes cluster
+#############################################################################
+
+- name: Include preflight checks
+  include_tasks: preflight.yml
+  tags: [pki, preflight]
+
+- name: Include CA certificate generation
+  include_tasks: ca.yml
+  tags: [pki, ca]
+  when: inventory_hostname == groups['masters'][0]
+
+- name: Include API server certificate generation
+  include_tasks: apiserver.yml
+  tags: [pki, apiserver]
+  when: inventory_hostname in groups['masters']
+
+- name: Include controller manager certificate generation
+  include_tasks: controller-manager.yml
+  tags: [pki, controller-manager]
+  when: inventory_hostname in groups['masters']
+
+- name: Include scheduler certificate generation
+  include_tasks: scheduler.yml
+  tags: [pki, scheduler]
+  when: inventory_hostname in groups['masters']
+
+- name: Include admin certificate generation
+  include_tasks: admin.yml
+  tags: [pki, admin]
+  when: inventory_hostname in groups['masters']
+
+- name: Include service account key generation
+  include_tasks: service-account.yml
+  tags: [pki, service-account]
+  when: inventory_hostname in groups['masters']
+
+- name: Include certificate distribution
+  include_tasks: distribute.yml
+  tags: [pki, distribute]
+
+- name: Include kubelet certificate generation
+  include_tasks: kubelet.yml
+  tags: [pki, kubelet]
+
+- name: Include kube-proxy certificate generation
+  include_tasks: proxy.yml
+  tags: [pki, proxy]
+
+- name: Verify all certificates
+  include_tasks: verify.yml
+  tags: [pki, verify]

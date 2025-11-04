@@ -1,0 +1,47 @@
+---
+#############################################################################
+# kube-scheduler Role - Default Variables
+#############################################################################
+
+# Kubernetes version
+k8s_version: "{{ k8s_version | default('1.31.0') }}"
+
+# Download URLs
+k8s_download_url: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64"
+
+# Installation paths
+k8s_bin_dir: /usr/local/bin
+k8s_config_dir: /etc/kubernetes
+k8s_pki_dir: "{{ k8s_config_dir }}/pki"
+
+# Scheduler configuration
+scheduler_bind_address: "0.0.0.0"
+scheduler_secure_port: 10259
+
+# Cluster configuration
+cluster_name: "{{ cluster_name | default('kubernetes') }}"
+
+# Leader election
+leader_elect: true
+
+# Certificate configuration
+client_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+
+# TLS configuration for scheduler
+tls_cert_file: "{{ k8s_pki_dir }}/kube-scheduler.crt"
+tls_private_key_file: "{{ k8s_pki_dir }}/kube-scheduler.key"
+
+# Kubeconfig
+kubeconfig_path: "{{ k8s_config_dir }}/scheduler.kubeconfig"
+
+# Scheduler config
+scheduler_config_path: "{{ k8s_config_dir }}/kube-scheduler-config.yaml"
+
+# Feature gates
+scheduler_feature_gates: ""
+
+# Logging
+scheduler_log_level: 2
+
+# Extra arguments
+scheduler_extra_args: {}

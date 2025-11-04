@@ -1,0 +1,71 @@
+---
+#############################################################################
+# PKI Role - Default Variables
+#############################################################################
+# Certificate Authority and certificate configuration for Kubernetes cluster
+#############################################################################
+
+# Certificate directories
+pki_dir: "/etc/kubernetes/pki"
+pki_temp_dir: "/tmp/k8s-pki"
+
+# Certificate validity (10 years for lab environment)
+cert_validity_days: 3650
+
+# CA Certificate Configuration
+ca_country: "US"
+ca_state: "California"
+ca_locality: "San Francisco"
+ca_organization: "Kubernetes"
+ca_organizational_unit: "CA"
+ca_common_name: "Kubernetes CA"
+
+# Certificate key size
+cert_key_size: 2048
+
+# Certificate subjects
+certs:
+  ca:
+    common_name: "Kubernetes CA"
+    organization: "Kubernetes"
+
+  apiserver:
+    common_name: "kube-apiserver"
+    organization: "Kubernetes"
+    # DNS names and IPs will be added dynamically
+
+  apiserver_kubelet_client:
+    common_name: "kube-apiserver-kubelet-client"
+    organization: "system:masters"
+
+  controller_manager:
+    common_name: "system:kube-controller-manager"
+    organization: "system:kube-controller-manager"
+
+  scheduler:
+    common_name: "system:kube-scheduler"
+    organization: "system:kube-scheduler"
+
+  admin:
+    common_name: "kubernetes-admin"
+    organization: "system:masters"
+
+  proxy:
+    common_name: "system:kube-proxy"
+    organization: "system:node-proxier"
+
+# API Server certificate SANs (Subject Alternative Names)
+# These will be merged with inventory-based IPs/hostnames
+apiserver_cert_sans:
+  dns:
+    - kubernetes
+    - kubernetes.default
+    - kubernetes.default.svc
+    - kubernetes.default.svc.cluster.local
+  ips:
+    - 127.0.0.1
+    # Service cluster IP (first IP in service CIDR) will be added dynamically
+
+# Service Account signing key
+service_account_key_file: "{{ pki_dir }}/sa.key"
+service_account_pub_file: "{{ pki_dir }}/sa.pub"

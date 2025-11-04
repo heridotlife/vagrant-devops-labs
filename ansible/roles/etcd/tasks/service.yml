@@ -1,0 +1,51 @@
+---
+#############################################################################
+# etcd - Systemd Service Setup
+#############################################################################
+
+- name: Create etcd systemd service file
+  template:
+    src: etcd.service.j2
+    dest: /etc/systemd/system/etcd.service
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  notify: restart etcd
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Enable etcd service
+  systemd:
+    name: etcd
+    enabled: yes
+  become: true
+
+- name: Start etcd service
+  systemd:
+    name: etcd
+    state: started
+  become: true
+
+- name: Wait for etcd to be ready
+  wait_for:
+    host: "{{ ansible_default_ipv4.address }}"
+    port: 2379
+    delay: 5
+    timeout: 60
+  become: true
+
+- name: Check etcd service status
+  systemd:
+    name: etcd
+  register: etcd_service_status
+  become: true
+
+- name: Display etcd service status
+  debug:
+    msg:
+      - "etcd service status: {{ etcd_service_status.status.ActiveState }}"
+      - "Enabled: {{ etcd_service_status.status.UnitFileState }}"

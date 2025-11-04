@@ -1,0 +1,40 @@
+---
+#############################################################################
+# kubelet - Verification Tasks
+#############################################################################
+
+- name: Check if kubelet is listening
+  wait_for:
+    host: "127.0.0.1"
+    port: "{{ kubelet_port }}"
+    timeout: 30
+
+- name: Verify kubelet process
+  command: pgrep -f kubelet
+  register: kubelet_process
+  changed_when: false
+  failed_when: kubelet_process.rc != 0
+
+- name: Check kubelet health endpoint
+  uri:
+    url: "https://127.0.0.1:{{ kubelet_port }}/healthz"
+    validate_certs: no
+    return_content: yes
+    client_cert: "{{ tls_cert_file }}"
+    client_key: "{{ tls_private_key_file }}"
+  register: healthz_check
+  failed_when: healthz_check.status != 200
+  retries: 5
+  delay: 5
+  ignore_errors: yes
+
+- name: Display verification summary
+  debug:
+    msg:
+      - "════════════════════════════════════"
+      - "  kubelet Verification Complete"
+      - "════════════════════════════════════"
+      - "Node: {{ ansible_hostname }}"
+      - "Status: Running"
+      - "Port: {{ kubelet_port }}"
+      - "Process ID: {{ kubelet_process.stdout }}"

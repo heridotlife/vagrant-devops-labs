@@ -1,0 +1,29 @@
+---
+#############################################################################
+# Container Runtime - Containerd Configuration
+#############################################################################
+
+- name: Generate default containerd configuration
+  shell: "{{ containerd_bin_dir }}/containerd config default"
+  register: containerd_default_config
+  changed_when: false
+  become: true
+
+- name: Create containerd configuration from template
+  template:
+    src: config.toml.j2
+    dest: "{{ containerd_config_dir }}/config.toml"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  notify: restart containerd
+
+- name: Verify containerd configuration file
+  stat:
+    path: "{{ containerd_config_dir }}/config.toml"
+  register: containerd_config_file
+
+- name: Display containerd configuration status
+  debug:
+    msg: "Containerd config: {{ containerd_config_dir }}/config.toml {{ 'exists' if containerd_config_file.stat.exists else 'NOT FOUND' }}"

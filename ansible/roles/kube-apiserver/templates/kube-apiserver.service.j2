@@ -1,0 +1,48 @@
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://kubernetes.io/docs/concepts/overview/components/#kube-apiserver
+After=network.target
+
+[Service]
+Type=notify
+ExecStart={{ k8s_bin_dir }}/kube-apiserver \
+  --advertise-address={{ apiserver_advertise_address }} \
+  --allow-privileged=true \
+  --authorization-mode={{ authorization_modes | join(',') }} \
+  --bind-address={{ apiserver_bind_address }} \
+  --client-ca-file={{ client_ca_file }} \
+  --enable-admission-plugins={{ enable_admission_plugins | join(',') }} \
+  --enable-bootstrap-token-auth=true \
+  --etcd-cafile={{ etcd_ca_file }} \
+  --etcd-certfile={{ etcd_cert_file }} \
+  --etcd-keyfile={{ etcd_key_file }} \
+  --etcd-servers={{ etcd_servers }} \
+  --kubelet-client-certificate={{ kubelet_client_certificate }} \
+  --kubelet-client-key={{ kubelet_client_key }} \
+  --kubelet-preferred-address-types={{ kubelet_preferred_address_types }} \
+  --secure-port={{ apiserver_secure_port }} \
+  --service-account-issuer={{ service_account_issuer }} \
+  --service-account-key-file={{ service_account_key_file }} \
+  --service-account-signing-key-file={{ service_account_signing_key_file }} \
+  --service-cluster-ip-range={{ service_cluster_ip_range }} \
+  --service-node-port-range={{ service_node_port_range }} \
+  --tls-cert-file={{ tls_cert_file }} \
+  --tls-private-key-file={{ tls_private_key_file }} \
+  --encryption-provider-config={{ k8s_config_dir }}/encryption-config.yaml \
+{% if enable_audit_log %}
+  --audit-log-path={{ audit_log_path }} \
+  --audit-log-maxage={{ audit_log_maxage }} \
+  --audit-log-maxbackup={{ audit_log_maxbackup }} \
+  --audit-log-maxsize={{ audit_log_maxsize }} \
+  --audit-policy-file={{ k8s_config_dir }}/audit-policy.yaml \
+{% endif %}
+  --max-requests-inflight={{ max_requests_inflight }} \
+  --max-mutating-requests-inflight={{ max_mutating_requests_inflight }} \
+  --request-timeout={{ request_timeout }} \
+  --v={{ apiserver_log_level }}
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

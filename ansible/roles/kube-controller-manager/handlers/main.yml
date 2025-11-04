@@ -1,0 +1,15 @@
+---
+#############################################################################
+# kube-controller-manager - Handlers
+#############################################################################
+
+- name: restart kube-controller-manager
+  systemd:
+    name: kube-controller-manager
+    state: restarted
+    daemon_reload: yes
+
+- name: reload kube-controller-manager
+  systemd:
+    name: kube-controller-manager
+    state: reloaded

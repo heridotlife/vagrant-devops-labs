@@ -1,0 +1,57 @@
+---
+#############################################################################
+# Regenerate API Server Certificate
+#############################################################################
+# This playbook regenerates the API server certificate with corrected SANs
+#############################################################################
+
+- name: Regenerate API Server Certificate
+  hosts: masters
+  gather_facts: true
+  become: true
+
+  pre_tasks:
+    - name: Display task info
+      debug:
+        msg: "Regenerating API server certificate on {{ inventory_hostname }}"
+
+  tasks:
+    - name: Backup existing API server certificate
+      copy:
+        src: "{{ item }}"
+        dest: "{{ item }}.backup"
+        remote_src: yes
+      loop:
+        - /etc/kubernetes/pki/apiserver.crt
+        - /etc/kubernetes/pki/apiserver.key
+      ignore_errors: yes
+
+    - name: Include API server certificate generation
+      include_role:
+        name: pki
+        tasks_from: apiserver
+
+    - name: Restart kube-apiserver service
+      systemd:
+        name: kube-apiserver
+        state: restarted
+        daemon_reload: yes
+
+    - name: Wait for API server to be ready
+      wait_for:
+        port: 6443
+        host: "{{ ansible_default_ipv4.address }}"
+        timeout: 60
+
+    - name: Display new certificate SANs
+      shell: openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -text | grep -A 5 'Subject Alternative Name'
+      register: new_cert_sans
+
+    - name: Show new certificate SANs
+      debug:
+        msg: "{{ new_cert_sans.stdout_lines }}"
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: "API server certificate regenerated successfully on {{ inventory_hostname }}"

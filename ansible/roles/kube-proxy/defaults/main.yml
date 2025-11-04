@@ -1,0 +1,56 @@
+---
+#############################################################################
+# kube-proxy Role - Default Variables
+#############################################################################
+
+# Kubernetes version
+k8s_version: "{{ k8s_version | default('1.31.0') }}"
+
+# Download URLs
+k8s_download_url: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64"
+
+# Installation paths
+k8s_bin_dir: /usr/local/bin
+k8s_config_dir: /etc/kubernetes
+k8s_pki_dir: "{{ k8s_config_dir }}/pki"
+kube_proxy_config_dir: /var/lib/kube-proxy
+
+# Proxy configuration
+proxy_bind_address: "0.0.0.0"
+proxy_healthz_port: 10256
+proxy_metrics_port: 10249
+
+# Cluster configuration
+cluster_name: "{{ cluster_name | default('kubernetes') }}"
+cluster_cidr: "10.244.0.0/16"
+
+# Proxy mode (iptables or ipvs)
+proxy_mode: "iptables"
+
+# TLS configuration
+client_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+tls_cert_file: "{{ k8s_pki_dir }}/kube-proxy.crt"
+tls_private_key_file: "{{ k8s_pki_dir }}/kube-proxy.key"
+
+# Kubeconfig
+kubeconfig_path: "{{ kube_proxy_config_dir }}/kubeconfig"
+
+# Kube-proxy config
+kube_proxy_config_path: "{{ kube_proxy_config_dir }}/kube-proxy-config.yaml"
+
+# Feature gates
+kube_proxy_feature_gates: ""
+
+# Logging
+kube_proxy_log_level: 2
+
+# Extra arguments
+kube_proxy_extra_args: {}
+
+# Conntrack settings
+conntrack_max_per_core: 32768
+conntrack_min: 131072
+
+# IPTables settings
+iptables_masquerade_bit: 14
+iptables_sync_period: "30s"

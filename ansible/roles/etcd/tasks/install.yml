@@ -1,0 +1,67 @@
+---
+#############################################################################
+# etcd - Installation
+#############################################################################
+
+- name: Download etcd archive
+  get_url:
+    url: "{{ etcd_download_url }}"
+    dest: "/tmp/etcd-v{{ etcd_version }}.tar.gz"
+    mode: '0644'
+    timeout: 300
+  when: not etcd_installed.stat.exists
+  become: true
+
+- name: Extract etcd archive
+  unarchive:
+    src: "/tmp/etcd-v{{ etcd_version }}.tar.gz"
+    dest: /tmp
+    remote_src: yes
+    creates: "/tmp/etcd-v{{ etcd_version }}-linux-amd64"
+  when: not etcd_installed.stat.exists
+  become: true
+
+- name: Copy etcd binaries to bin directory
+  copy:
+    src: "/tmp/etcd-v{{ etcd_version }}-linux-amd64/{{ item }}"
+    dest: "{{ etcd_bin_dir }}/{{ item }}"
+    mode: '0755'
+    owner: root
+    group: root
+    remote_src: yes
+  loop:
+    - etcd
+    - etcdctl
+    - etcdutl
+  when: not etcd_installed.stat.exists
+  become: true
+
+- name: Cleanup etcd download files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/etcd-v{{ etcd_version }}.tar.gz"
+    - "/tmp/etcd-v{{ etcd_version }}-linux-amd64"
+  when: not etcd_installed.stat.exists
+  become: true
+
+- name: Verify etcd binary installation
+  stat:
+    path: "{{ etcd_bin_dir }}/etcd"
+  register: etcd_binary
+
+- name: Display etcd binary status
+  debug:
+    msg: "etcd binary: {{ 'installed' if etcd_binary.stat.exists else 'NOT FOUND' }}"
+
+- name: Get etcd version
+  command: "{{ etcd_bin_dir }}/etcd --version"
+  register: etcd_version_output
+  changed_when: false
+  when: etcd_binary.stat.exists
+
+- name: Display etcd version
+  debug:
+    msg: "{{ etcd_version_output.stdout_lines }}"
+  when: etcd_version_output is defined

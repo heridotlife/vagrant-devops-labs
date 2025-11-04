@@ -1,0 +1,27 @@
+---
+#############################################################################
+# kubelet - Service Management Tasks
+#############################################################################
+
+- name: Enable kubelet service
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+
+- name: Wait for kubelet to be ready
+  wait_for:
+    host: "{{ kubelet_bind_address if kubelet_bind_address != '0.0.0.0' else '127.0.0.1' }}"
+    port: "{{ kubelet_port }}"
+    timeout: 60
+
+- name: Check kubelet service status
+  systemd:
+    name: kubelet
+  register: kubelet_status
+
+- name: Display service status
+  debug:
+    msg:
+      - "kubelet service status: {{ kubelet_status.status.ActiveState }}"
+      - "Service enabled: {{ kubelet_status.status.UnitFileState }}"

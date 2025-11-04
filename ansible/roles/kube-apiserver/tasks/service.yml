@@ -1,0 +1,33 @@
+---
+#############################################################################
+# kube-apiserver - Service Management Tasks
+#############################################################################
+
+- name: Enable kube-apiserver service
+  systemd:
+    name: kube-apiserver
+    enabled: yes
+    state: started
+
+- name: Wait for kube-apiserver to be ready
+  uri:
+    url: "https://{{ apiserver_advertise_address }}:{{ apiserver_secure_port }}/healthz"
+    validate_certs: no
+    client_cert: "{{ kubelet_client_certificate }}"
+    client_key: "{{ kubelet_client_key }}"
+  register: healthz
+  until: healthz.status == 200
+  retries: 30
+  delay: 10
+  ignore_errors: yes
+
+- name: Check kube-apiserver service status
+  systemd:
+    name: kube-apiserver
+  register: apiserver_status
+
+- name: Display service status
+  debug:
+    msg:
+      - "kube-apiserver service status: {{ apiserver_status.status.ActiveState }}"
+      - "Service enabled: {{ apiserver_status.status.UnitFileState }}"

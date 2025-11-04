@@ -1,0 +1,56 @@
+---
+#############################################################################
+# PKI Role - Kubelet Certificate Generation
+#############################################################################
+
+- name: Set kubelet certificate common name
+  set_fact:
+    kubelet_cn: "system:node:{{ inventory_hostname }}"
+
+- name: Generate kubelet private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/{{ inventory_hostname }}.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate kubelet CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/{{ inventory_hostname }}.csr"
+    privatekey_path: "{{ pki_dir }}/{{ inventory_hostname }}.key"
+    common_name: "{{ kubelet_cn }}"
+    organization_name: "system:nodes"
+    subject_alt_name:
+      - "DNS:{{ inventory_hostname }}"
+      - "DNS:{{ ansible_hostname }}"
+      - "DNS:{{ ansible_fqdn }}"
+      - "IP:{{ ansible_default_ipv4.address }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  become: true
+
+- name: Generate kubelet certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/{{ inventory_hostname }}.crt"
+    csr_path: "{{ pki_temp_dir }}/{{ inventory_hostname }}.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Display kubelet certificate info
+  shell: openssl x509 -in {{ pki_dir }}/{{ inventory_hostname }}.crt -noout -subject
+  register: kubelet_cert_info
+  changed_when: false
+  become: true
+
+- name: Show kubelet certificate details
+  debug:
+    msg: "{{ kubelet_cert_info.stdout }}"

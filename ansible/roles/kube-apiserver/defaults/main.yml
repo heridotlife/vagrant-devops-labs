@@ -1,0 +1,88 @@
+---
+#############################################################################
+# kube-apiserver Role - Default Variables
+#############################################################################
+
+# Kubernetes version
+k8s_version: "{{ k8s_version | default('1.31.0') }}"
+
+# Download URLs
+k8s_download_url: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64"
+
+# Installation paths
+k8s_bin_dir: /usr/local/bin
+k8s_config_dir: /etc/kubernetes
+k8s_pki_dir: "{{ k8s_config_dir }}/pki"
+k8s_manifests_dir: "{{ k8s_config_dir }}/manifests"
+
+# API Server configuration
+apiserver_bind_address: "0.0.0.0"
+apiserver_secure_port: 6443
+apiserver_advertise_address: "{{ ansible_default_ipv4.address }}"
+
+# etcd configuration
+etcd_servers: "https://{{ ansible_default_ipv4.address }}:2379"
+
+# Network configuration
+service_cluster_ip_range: "10.96.0.0/16"
+service_node_port_range: "30000-32767"
+
+# Feature gates
+apiserver_feature_gates: ""
+
+# Runtime configuration
+apiserver_runtime_config: ""
+
+# Audit configuration
+enable_audit_log: false
+audit_log_path: /var/log/kubernetes/audit.log
+audit_log_maxage: 30
+audit_log_maxbackup: 10
+audit_log_maxsize: 100
+
+# Authorization modes
+authorization_modes:
+  - Node
+  - RBAC
+
+# Admission control plugins
+enable_admission_plugins:
+  - NodeRestriction
+  - NamespaceLifecycle
+  - LimitRanger
+  - ServiceAccount
+  - DefaultStorageClass
+  - ResourceQuota
+
+# Service account configuration
+service_account_key_file: "{{ k8s_pki_dir }}/sa.key"
+service_account_signing_key_file: "{{ k8s_pki_dir }}/sa.key"
+service_account_issuer: "https://kubernetes.default.svc.cluster.local"
+
+# TLS configuration
+client_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+tls_cert_file: "{{ k8s_pki_dir }}/apiserver.crt"
+tls_private_key_file: "{{ k8s_pki_dir }}/apiserver.key"
+kubelet_client_certificate: "{{ k8s_pki_dir }}/apiserver-kubelet-client.crt"
+kubelet_client_key: "{{ k8s_pki_dir }}/apiserver-kubelet-client.key"
+
+# etcd TLS configuration
+etcd_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+etcd_cert_file: "{{ k8s_pki_dir }}/apiserver-etcd-client.crt"
+etcd_key_file: "{{ k8s_pki_dir }}/apiserver-etcd-client.key"
+
+# Proxy configuration
+kubelet_preferred_address_types: "InternalIP,ExternalIP,Hostname"
+
+# API Server flags
+apiserver_extra_args: {}
+
+# Logging
+apiserver_log_level: 2
+
+# Request limits
+max_requests_inflight: 400
+max_mutating_requests_inflight: 200
+
+# Timeouts
+request_timeout: "1m0s"

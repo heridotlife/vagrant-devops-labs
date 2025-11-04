@@ -22,6 +22,9 @@ service_cidr: "{{ lookup('env', 'SERVICE_CIDR') | default('10.96.0.0/16', true) 
 cluster_dns: "{{ lookup('env', 'CLUSTER_DNS') | default('10.96.0.10', true) }}"
 cluster_domain: "{{ lookup('env', 'CLUSTER_DOMAIN') | default('cluster.local', true) }}"
 
+# API Server configuration (use host-only network IP for cross-node communication)
+apiserver_address: "{{ lookup('env', 'APISERVER_ADDRESS') | default('10.240.0.11', true) }}"
+
 # MetalLB configuration
 metallb_ip_start: "{{ lookup('env', 'METALLB_IP_START') | default('10.240.0.200', true) }}"
 metallb_ip_end: "{{ lookup('env', 'METALLB_IP_END') | default('10.240.0.220', true) }}"

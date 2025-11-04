@@ -1,0 +1,59 @@
+---
+#############################################################################
+# etcd Role - Default Variables
+#############################################################################
+# etcd cluster configuration for Kubernetes
+#############################################################################
+
+# etcd version
+etcd_version: "3.5.16"
+
+# Download URL
+etcd_download_url: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-amd64.tar.gz"
+
+# Installation directories
+etcd_bin_dir: "/usr/local/bin"
+etcd_data_dir: "/var/lib/etcd"
+etcd_config_dir: "/etc/etcd"
+
+# Certificate paths (from PKI role)
+etcd_cert_dir: "/etc/kubernetes/pki"
+etcd_ca_file: "{{ etcd_cert_dir }}/ca.crt"
+etcd_cert_file: "{{ etcd_cert_dir }}/apiserver.crt"
+etcd_key_file: "{{ etcd_cert_dir }}/apiserver.key"
+
+# Network configuration
+etcd_listen_client_urls: "https://{{ ansible_default_ipv4.address }}:2379,https://127.0.0.1:2379"
+etcd_advertise_client_urls: "https://{{ ansible_default_ipv4.address }}:2379"
+etcd_listen_peer_urls: "https://{{ ansible_default_ipv4.address }}:2380"
+etcd_initial_advertise_peer_urls: "https://{{ ansible_default_ipv4.address }}:2380"
+
+# Cluster configuration
+etcd_name: "{{ inventory_hostname }}"
+etcd_initial_cluster_token: "etcd-cluster-{{ cluster_name }}"
+etcd_initial_cluster_state: "new"
+
+# For single-node setup (MVP)
+etcd_initial_cluster: "{{ inventory_hostname }}=https://{{ ansible_default_ipv4.address }}:2380"
+
+# Snapshot configuration
+etcd_snapshot_count: 10000
+etcd_heartbeat_interval: 100
+etcd_election_timeout: 1000
+
+# Quota configuration (8GB)
+etcd_quota_backend_bytes: 8589934592
+
+# Security
+etcd_client_cert_auth: true
+etcd_peer_client_cert_auth: true
+etcd_peer_auto_tls: false
+etcd_auto_tls: false
+
+# Logging
+etcd_log_level: "info"
+etcd_log_outputs: ["systemd/journal"]
+
+# Metrics
+etcd_metrics: "basic"
+etcd_listen_metrics_urls: "http://127.0.0.1:2381"

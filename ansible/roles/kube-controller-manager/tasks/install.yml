@@ -1,0 +1,25 @@
+---
+#############################################################################
+# kube-controller-manager - Installation Tasks
+#############################################################################
+
+- name: Install kube-controller-manager binary
+  copy:
+    src: /tmp/kubernetes-download/kube-controller-manager
+    dest: "{{ k8s_bin_dir }}/kube-controller-manager"
+    mode: '0755'
+    remote_src: yes
+
+- name: Verify kube-controller-manager installation
+  command: "{{ k8s_bin_dir }}/kube-controller-manager --version"
+  register: controller_manager_version
+  changed_when: false
+
+- name: Display kube-controller-manager version
+  debug:
+    msg: "{{ controller_manager_version.stdout }}"
+
+- name: Clean up download directory
+  file:
+    path: /tmp/kubernetes-download
+    state: absent

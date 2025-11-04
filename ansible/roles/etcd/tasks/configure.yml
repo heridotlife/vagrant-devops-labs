@@ -1,0 +1,23 @@
+---
+#############################################################################
+# etcd - Configuration
+#############################################################################
+
+- name: Create etcd environment file
+  template:
+    src: etcd.env.j2
+    dest: "{{ etcd_config_dir }}/etcd.env"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  notify: restart etcd
+
+- name: Verify etcd configuration file
+  stat:
+    path: "{{ etcd_config_dir }}/etcd.env"
+  register: etcd_config_file
+
+- name: Display etcd configuration status
+  debug:
+    msg: "etcd config: {{ etcd_config_dir }}/etcd.env {{ 'exists' if etcd_config_file.stat.exists else 'NOT FOUND' }}"

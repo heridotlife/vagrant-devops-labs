@@ -114,14 +114,18 @@ def generate_inventory(masters, workers)
     # Masters
     f.puts "[masters]"
     masters.each do |node|
-      f.puts "#{node[:name]} ansible_host=#{node[:ip]} ansible_user=vagrant ansible_ssh_private_key_file=.vagrant/machines/#{node[:name]}/virtualbox/private_key"
+      # Debug: ensure IP is a string
+      ip_addr = node[:ip].to_s
+      f.puts "#{node[:name]} ansible_host=#{ip_addr} ansible_user=vagrant ansible_ssh_private_key_file=.vagrant/machines/#{node[:name]}/virtualbox/private_key"
     end
     f.puts ""
 
     # Workers
     f.puts "[workers]"
     workers.each do |node|
-      f.puts "#{node[:name]} ansible_host=#{node[:ip]} ansible_user=vagrant ansible_ssh_private_key_file=.vagrant/machines/#{node[:name]}/virtualbox/private_key"
+      # Debug: ensure IP is a string
+      ip_addr = node[:ip].to_s
+      f.puts "#{node[:name]} ansible_host=#{ip_addr} ansible_user=vagrant ansible_ssh_private_key_file=.vagrant/machines/#{node[:name]}/virtualbox/private_key"
     end
     f.puts ""
 
@@ -134,7 +138,8 @@ def generate_inventory(masters, workers)
     # etcd nodes (on master for MVP)
     f.puts "[etcd]"
     masters.each do |node|
-      f.puts "#{node[:name]} ansible_host=#{node[:ip]}"
+      ip_addr = node[:ip].to_s
+      f.puts "#{node[:name]} ansible_host=#{ip_addr}"
     end
     f.puts ""
 

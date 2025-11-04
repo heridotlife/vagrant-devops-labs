@@ -1,0 +1,48 @@
+---
+#############################################################################
+# kube-apiserver - Configuration Tasks
+#############################################################################
+
+- name: Ensure PKI directory exists
+  file:
+    path: "{{ k8s_pki_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Verify required certificates exist
+  stat:
+    path: "{{ item }}"
+  register: cert_check
+  failed_when: not cert_check.stat.exists
+  loop:
+    - "{{ client_ca_file }}"
+    - "{{ tls_cert_file }}"
+    - "{{ tls_private_key_file }}"
+    - "{{ kubelet_client_certificate }}"
+    - "{{ kubelet_client_key }}"
+    - "{{ etcd_ca_file }}"
+    - "{{ service_account_key_file }}"
+
+- name: Generate encryption config
+  template:
+    src: encryption-config.yaml.j2
+    dest: "{{ k8s_config_dir }}/encryption-config.yaml"
+    mode: '0600'
+
+- name: Create audit policy file
+  template:
+    src: audit-policy.yaml.j2
+    dest: "{{ k8s_config_dir }}/audit-policy.yaml"
+    mode: '0644'
+  when: enable_audit_log
+
+- name: Create systemd service file for kube-apiserver
+  template:
+    src: kube-apiserver.service.j2
+    dest: /etc/systemd/system/kube-apiserver.service
+    mode: '0644'
+  notify: restart kube-apiserver
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes

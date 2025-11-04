@@ -1,0 +1,56 @@
+---
+#############################################################################
+# etcd - Preflight Checks
+#############################################################################
+
+- name: Check if etcd is already installed
+  stat:
+    path: "{{ etcd_bin_dir }}/etcd"
+  register: etcd_installed
+
+- name: Display etcd installation status
+  debug:
+    msg: "etcd is {{ 'already installed' if etcd_installed.stat.exists else 'not installed' }}"
+
+- name: Verify certificates exist
+  stat:
+    path: "{{ item }}"
+  register: cert_check
+  failed_when: not cert_check.stat.exists
+  loop:
+    - "{{ etcd_ca_file }}"
+    - "{{ etcd_cert_file }}"
+    - "{{ etcd_key_file }}"
+  become: true
+
+- name: Display certificate status
+  debug:
+    msg: "All required certificates found"
+
+- name: Create etcd data directory
+  file:
+    path: "{{ etcd_data_dir }}"
+    state: directory
+    mode: '0700'
+    owner: root
+    group: root
+  become: true
+
+- name: Create etcd config directory
+  file:
+    path: "{{ etcd_config_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Check if etcd data directory has existing data
+  find:
+    paths: "{{ etcd_data_dir }}"
+    file_type: any
+  register: etcd_existing_data
+
+- name: Display data directory status
+  debug:
+    msg: "etcd data directory {{ 'contains existing data' if etcd_existing_data.matched > 0 else 'is empty' }}"

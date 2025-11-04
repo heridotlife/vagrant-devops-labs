@@ -1,0 +1,67 @@
+---
+#############################################################################
+# PKI Role - CA Certificate Generation
+#############################################################################
+
+- name: Generate CA private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/ca.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+  when: not ca_exists.stat.exists
+
+- name: Generate CA certificate signing request
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/ca.csr"
+    privatekey_path: "{{ pki_dir }}/ca.key"
+    common_name: "{{ certs.ca.common_name }}"
+    organization_name: "{{ certs.ca.organization }}"
+    basic_constraints:
+      - "CA:TRUE"
+    basic_constraints_critical: true
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+      - keyCertSign
+    key_usage_critical: true
+  become: true
+  when: not ca_exists.stat.exists
+
+- name: Generate self-signed CA certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/ca.crt"
+    privatekey_path: "{{ pki_dir }}/ca.key"
+    csr_path: "{{ pki_temp_dir }}/ca.csr"
+    provider: selfsigned
+    selfsigned_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+  when: not ca_exists.stat.exists
+
+- name: Set CA certificate permissions
+  file:
+    path: "{{ pki_dir }}/ca.crt"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+
+- name: Set CA key permissions
+  file:
+    path: "{{ pki_dir }}/ca.key"
+    mode: '0600'
+    owner: root
+    group: root
+  become: true
+
+- name: Display CA certificate info
+  shell: openssl x509 -in {{ pki_dir }}/ca.crt -noout -subject -dates
+  register: ca_info
+  changed_when: false
+  become: true
+
+- name: Show CA certificate details
+  debug:
+    msg: "{{ ca_info.stdout_lines }}"

@@ -1,0 +1,14 @@
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://kubernetes.io/docs/concepts/overview/components/#kube-proxy
+After=network.target
+
+[Service]
+ExecStart={{ k8s_bin_dir }}/kube-proxy \
+  --config={{ kube_proxy_config_path }} \
+  --v={{ kube_proxy_log_level }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,37 @@
+---
+#############################################################################
+# Container Runtime - CNI Plugins Installation
+#############################################################################
+
+- name: Check if CNI plugins are already installed
+  stat:
+    path: "{{ cni_bin_dir }}/bridge"
+  register: cni_installed
+
+- name: Download CNI plugins archive
+  get_url:
+    url: "{{ cni_plugins_download_url }}"
+    dest: "/tmp/cni-plugins-v{{ cni_plugins_version }}.tgz"
+    mode: '0644'
+    timeout: 300
+  when: not cni_installed.stat.exists
+  become: true
+
+- name: Extract CNI plugins
+  unarchive:
+    src: "/tmp/cni-plugins-v{{ cni_plugins_version }}.tgz"
+    dest: "{{ cni_bin_dir }}"
+    remote_src: yes
+    creates: "{{ cni_bin_dir }}/bridge"
+  when: not cni_installed.stat.exists
+  become: true
+
+- name: List installed CNI plugins
+  find:
+    paths: "{{ cni_bin_dir }}"
+    file_type: file
+  register: cni_plugins
+
+- name: Display installed CNI plugins
+  debug:
+    msg: "Installed CNI plugins ({{ cni_plugins.files | length }}): {{ cni_plugins.files | map(attribute='path') | map('basename') | sort | join(', ') }}"

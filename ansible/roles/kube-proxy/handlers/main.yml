@@ -1,0 +1,15 @@
+---
+#############################################################################
+# kube-proxy - Handlers
+#############################################################################
+
+- name: restart kube-proxy
+  systemd:
+    name: kube-proxy
+    state: restarted
+    daemon_reload: yes
+
+- name: reload kube-proxy
+  systemd:
+    name: kube-proxy
+    state: reloaded

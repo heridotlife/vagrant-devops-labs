@@ -38,7 +38,7 @@ NC := \033[0m # No Color
 CLUSTER_NAME ?= k8s-lab
 K8S_VERSION ?= 1.31.0
 VAGRANT := vagrant
-ANSIBLE := ansible-playbook
+ANSIBLE := ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook
 KUBECTL := kubectl
 
 # Directories

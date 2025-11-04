@@ -1,0 +1,67 @@
+---
+#############################################################################
+# kube-controller-manager Role - Default Variables
+#############################################################################
+
+# Kubernetes version
+k8s_version: "{{ k8s_version | default('1.31.0') }}"
+
+# Download URLs
+k8s_download_url: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64"
+
+# Installation paths
+k8s_bin_dir: /usr/local/bin
+k8s_config_dir: /etc/kubernetes
+k8s_pki_dir: "{{ k8s_config_dir }}/pki"
+
+# Controller Manager configuration
+controller_manager_bind_address: "0.0.0.0"
+controller_manager_secure_port: 10257
+
+# Cluster configuration
+cluster_name: "{{ cluster_name | default('kubernetes') }}"
+cluster_cidr: "10.244.0.0/16"
+service_cluster_ip_range: "10.96.0.0/16"
+node_cidr_mask_size: 24
+
+# Leader election
+leader_elect: true
+leader_elect_lease_duration: "15s"
+leader_elect_renew_deadline: "10s"
+leader_elect_retry_period: "2s"
+
+# Certificate configuration
+client_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+cluster_signing_cert_file: "{{ k8s_pki_dir }}/ca.crt"
+cluster_signing_key_file: "{{ k8s_pki_dir }}/ca.key"
+root_ca_file: "{{ k8s_pki_dir }}/ca.crt"
+
+# TLS configuration for controller manager
+tls_cert_file: "{{ k8s_pki_dir }}/kube-controller-manager.crt"
+tls_private_key_file: "{{ k8s_pki_dir }}/kube-controller-manager.key"
+
+# Service account configuration
+service_account_private_key_file: "{{ k8s_pki_dir }}/sa.key"
+
+# Kubeconfig
+kubeconfig_path: "{{ k8s_config_dir }}/controller-manager.kubeconfig"
+
+# Controllers to enable (empty means all)
+controllers:
+  - "*"
+  - "bootstrapsigner"
+  - "tokencleaner"
+
+# Feature gates
+controller_manager_feature_gates: ""
+
+# Timeouts and intervals
+node_monitor_period: "5s"
+node_monitor_grace_period: "40s"
+pod_eviction_timeout: "5m"
+
+# Logging
+controller_manager_log_level: 2
+
+# Extra arguments
+controller_manager_extra_args: {}

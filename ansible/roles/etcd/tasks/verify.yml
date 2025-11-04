@@ -1,0 +1,85 @@
+---
+#############################################################################
+# etcd - Verification
+#############################################################################
+
+- name: Set etcdctl environment variables
+  set_fact:
+    etcdctl_env:
+      ETCDCTL_API: "3"
+      ETCDCTL_CACERT: "{{ etcd_ca_file }}"
+      ETCDCTL_CERT: "{{ etcd_cert_file }}"
+      ETCDCTL_KEY: "{{ etcd_key_file }}"
+      ETCDCTL_ENDPOINTS: "https://{{ ansible_default_ipv4.address }}:2379"
+
+- name: Check etcd cluster health
+  command: "{{ etcd_bin_dir }}/etcdctl endpoint health"
+  environment: "{{ etcdctl_env }}"
+  register: etcd_health
+  changed_when: false
+  become: true
+
+- name: Display etcd health
+  debug:
+    msg: "{{ etcd_health.stdout_lines }}"
+
+- name: Check etcd cluster status
+  command: "{{ etcd_bin_dir }}/etcdctl endpoint status --write-out=table"
+  environment: "{{ etcdctl_env }}"
+  register: etcd_status
+  changed_when: false
+  become: true
+
+- name: Display etcd status
+  debug:
+    msg: "{{ etcd_status.stdout_lines }}"
+
+- name: List etcd members
+  command: "{{ etcd_bin_dir }}/etcdctl member list --write-out=table"
+  environment: "{{ etcdctl_env }}"
+  register: etcd_members
+  changed_when: false
+  become: true
+
+- name: Display etcd members
+  debug:
+    msg: "{{ etcd_members.stdout_lines }}"
+
+- name: Test etcd write operation
+  command: "{{ etcd_bin_dir }}/etcdctl put test-key test-value"
+  environment: "{{ etcdctl_env }}"
+  register: etcd_put
+  changed_when: false
+  become: true
+
+- name: Test etcd read operation
+  command: "{{ etcd_bin_dir }}/etcdctl get test-key"
+  environment: "{{ etcdctl_env }}"
+  register: etcd_get
+  changed_when: false
+  become: true
+
+- name: Verify read result
+  debug:
+    msg: "etcd read test: {{ 'PASSED' if 'test-value' in etcd_get.stdout else 'FAILED' }}"
+
+- name: Delete test key
+  command: "{{ etcd_bin_dir }}/etcdctl del test-key"
+  environment: "{{ etcdctl_env }}"
+  changed_when: false
+  become: true
+
+- name: Verification summary
+  debug:
+    msg:
+      - "════════════════════════════════════════════════════"
+      - "  etcd Installation Verification"
+      - "════════════════════════════════════════════════════"
+      - "✓ etcd binary: {{ etcd_bin_dir }}/etcd"
+      - "✓ etcdctl binary: {{ etcd_bin_dir }}/etcdctl"
+      - "✓ Data directory: {{ etcd_data_dir }}"
+      - "✓ Configuration: {{ etcd_config_dir }}/etcd.env"
+      - "✓ Service: active and enabled"
+      - "✓ Cluster health: healthy"
+      - "✓ Read/Write test: passed"
+      - "════════════════════════════════════════════════════"

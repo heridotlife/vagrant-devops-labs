@@ -1,0 +1,34 @@
+---
+#############################################################################
+# Container Runtime Role - Main Tasks
+#############################################################################
+# Install and configure containerd for Kubernetes
+#############################################################################
+
+- name: Include preflight checks
+  include_tasks: preflight.yml
+  tags: [containerd, preflight]
+
+- name: Include containerd installation
+  include_tasks: install.yml
+  tags: [containerd, install]
+
+- name: Include runc installation
+  include_tasks: runc.yml
+  tags: [containerd, runc]
+
+- name: Include CNI plugins installation
+  include_tasks: cni-plugins.yml
+  tags: [containerd, cni]
+
+- name: Include containerd configuration
+  include_tasks: configure.yml
+  tags: [containerd, configure]
+
+- name: Include systemd service setup
+  include_tasks: service.yml
+  tags: [containerd, service]
+
+- name: Include verification
+  include_tasks: verify.yml
+  tags: [containerd, verify]

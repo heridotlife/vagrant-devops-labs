@@ -1,0 +1,33 @@
+---
+#############################################################################
+# kube-proxy - Download Tasks
+#############################################################################
+
+- name: Create temporary download directory
+  file:
+    path: /tmp/kubernetes-download
+    state: directory
+    mode: '0755'
+
+- name: Download kube-proxy binary
+  get_url:
+    url: "{{ k8s_download_url }}/kube-proxy"
+    dest: /tmp/kubernetes-download/kube-proxy
+    mode: '0755'
+    timeout: 300
+  register: download_result
+  retries: 3
+  delay: 5
+  until: download_result is succeeded
+
+- name: Verify kube-proxy binary
+  stat:
+    path: /tmp/kubernetes-download/kube-proxy
+  register: kube_proxy_binary
+  failed_when: not kube_proxy_binary.stat.exists or kube_proxy_binary.stat.size == 0
+
+- name: Display download information
+  debug:
+    msg:
+      - "kube-proxy binary downloaded successfully"
+      - "Size: {{ (kube_proxy_binary.stat.size / 1024 / 1024) | round(2) }} MB"

@@ -1,0 +1,46 @@
+---
+#############################################################################
+# PKI Role - Admin User Certificate Generation
+#############################################################################
+
+- name: Generate admin private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/admin.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate admin CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/admin.csr"
+    privatekey_path: "{{ pki_dir }}/admin.key"
+    common_name: "{{ certs.admin.common_name }}"
+    organization_name: "{{ certs.admin.organization }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+  become: true
+
+- name: Generate admin certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/admin.crt"
+    csr_path: "{{ pki_temp_dir }}/admin.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Display admin certificate info
+  shell: openssl x509 -in {{ pki_dir }}/admin.crt -noout -subject
+  register: admin_cert_info
+  changed_when: false
+  become: true
+
+- name: Show admin certificate details
+  debug:
+    msg: "{{ admin_cert_info.stdout }}"

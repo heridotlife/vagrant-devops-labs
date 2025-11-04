@@ -1,0 +1,43 @@
+---
+#############################################################################
+# Container Runtime - Systemd Service Setup
+#############################################################################
+
+- name: Create containerd systemd service file
+  template:
+    src: containerd.service.j2
+    dest: /etc/systemd/system/containerd.service
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  notify: restart containerd
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Enable containerd service
+  systemd:
+    name: containerd
+    enabled: yes
+  become: true
+
+- name: Start containerd service
+  systemd:
+    name: containerd
+    state: started
+  become: true
+
+- name: Check containerd service status
+  systemd:
+    name: containerd
+  register: containerd_service_status
+  become: true
+
+- name: Display containerd service status
+  debug:
+    msg:
+      - "Containerd service status: {{ containerd_service_status.status.ActiveState }}"
+      - "Enabled: {{ containerd_service_status.status.UnitFileState }}"

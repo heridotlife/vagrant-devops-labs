@@ -1,0 +1,46 @@
+---
+#############################################################################
+# PKI Role - Controller Manager Certificate Generation
+#############################################################################
+
+- name: Generate controller manager private key
+  openssl_privatekey:
+    path: "{{ pki_dir }}/kube-controller-manager.key"
+    size: "{{ cert_key_size }}"
+    type: RSA
+    mode: '0600'
+  become: true
+
+- name: Generate controller manager CSR
+  openssl_csr:
+    path: "{{ pki_temp_dir }}/kube-controller-manager.csr"
+    privatekey_path: "{{ pki_dir }}/kube-controller-manager.key"
+    common_name: "{{ certs.controller_manager.common_name }}"
+    organization_name: "{{ certs.controller_manager.organization }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+  become: true
+
+- name: Generate controller manager certificate
+  openssl_certificate:
+    path: "{{ pki_dir }}/kube-controller-manager.crt"
+    csr_path: "{{ pki_temp_dir }}/kube-controller-manager.csr"
+    ownca_path: "{{ pki_dir }}/ca.crt"
+    ownca_privatekey_path: "{{ pki_dir }}/ca.key"
+    provider: ownca
+    ownca_not_after: "+{{ cert_validity_days }}d"
+    mode: '0644'
+  become: true
+
+- name: Display controller manager certificate info
+  shell: openssl x509 -in {{ pki_dir }}/kube-controller-manager.crt -noout -subject
+  register: cm_cert_info
+  changed_when: false
+  become: true
+
+- name: Show controller manager certificate details
+  debug:
+    msg: "{{ cm_cert_info.stdout }}"

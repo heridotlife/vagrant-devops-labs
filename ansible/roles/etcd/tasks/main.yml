@@ -1,0 +1,26 @@
+---
+#############################################################################
+# etcd Role - Main Tasks
+#############################################################################
+# Install and configure etcd for Kubernetes cluster
+#############################################################################
+
+- name: Include preflight checks
+  include_tasks: preflight.yml
+  tags: [etcd, preflight]
+
+- name: Include etcd installation
+  include_tasks: install.yml
+  tags: [etcd, install]
+
+- name: Include etcd configuration
+  include_tasks: configure.yml
+  tags: [etcd, configure]
+
+- name: Include systemd service setup
+  include_tasks: service.yml
+  tags: [etcd, service]
+
+- name: Include verification
+  include_tasks: verify.yml
+  tags: [etcd, verify]

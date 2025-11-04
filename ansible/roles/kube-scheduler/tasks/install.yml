@@ -1,0 +1,25 @@
+---
+#############################################################################
+# kube-scheduler - Installation Tasks
+#############################################################################
+
+- name: Install kube-scheduler binary
+  copy:
+    src: /tmp/kubernetes-download/kube-scheduler
+    dest: "{{ k8s_bin_dir }}/kube-scheduler"
+    mode: '0755'
+    remote_src: yes
+
+- name: Verify kube-scheduler installation
+  command: "{{ k8s_bin_dir }}/kube-scheduler --version"
+  register: scheduler_version
+  changed_when: false
+
+- name: Display kube-scheduler version
+  debug:
+    msg: "{{ scheduler_version.stdout }}"
+
+- name: Clean up download directory
+  file:
+    path: /tmp/kubernetes-download
+    state: absent

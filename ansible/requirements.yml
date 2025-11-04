@@ -1,0 +1,23 @@
+---
+#############################################################################
+# Ansible Galaxy Requirements
+#############################################################################
+# Required collections and roles for Kubernetes lab
+#
+# Install with:
+#   ansible-galaxy collection install -r requirements.yml
+#
+#############################################################################
+
+collections:
+  # Required for PKI role (OpenSSL certificate generation)
+  - name: community.crypto
+    version: ">=2.0.0"
+
+  # Required for network utilities (IP address manipulation)
+  - name: ansible.utils
+    version: ">=2.0.0"
+
+  # Future requirements
+  # - name: kubernetes.core
+  #   version: ">=2.0.0"

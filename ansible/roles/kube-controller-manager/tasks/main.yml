@@ -1,0 +1,28 @@
+---
+#############################################################################
+# kube-controller-manager Role - Main Tasks
+#############################################################################
+
+- name: Include download tasks
+  include_tasks: download.yml
+  tags: ['download']
+
+- name: Include installation tasks
+  include_tasks: install.yml
+  tags: ['install']
+
+- name: Include kubeconfig tasks
+  include_tasks: kubeconfig.yml
+  tags: ['kubeconfig']
+
+- name: Include configuration tasks
+  include_tasks: configure.yml
+  tags: ['configure']
+
+- name: Include service tasks
+  include_tasks: service.yml
+  tags: ['service']
+
+- name: Include verification tasks
+  include_tasks: verify.yml
+  tags: ['verify']

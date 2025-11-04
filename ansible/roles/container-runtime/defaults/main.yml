@@ -1,0 +1,52 @@
+---
+#############################################################################
+# Container Runtime Role - Default Variables
+#############################################################################
+# Containerd configuration for Kubernetes cluster
+#############################################################################
+
+# Containerd version
+containerd_version: "1.7.22"
+runc_version: "1.1.14"
+cni_plugins_version: "1.5.1"
+
+# Download URLs
+containerd_download_url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-linux-amd64.tar.gz"
+runc_download_url: "https://github.com/opencontainers/runc/releases/download/v{{ runc_version }}/runc.amd64"
+cni_plugins_download_url: "https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/cni-plugins-linux-amd64-v{{ cni_plugins_version }}.tgz"
+
+# Installation directories
+containerd_bin_dir: "/usr/local/bin"
+containerd_config_dir: "/etc/containerd"
+cni_bin_dir: "/opt/cni/bin"
+cni_config_dir: "/etc/cni/net.d"
+
+# Systemd cgroup driver (required for Kubernetes)
+containerd_use_systemd_cgroup: true
+
+# Sandbox image (pause container)
+containerd_sandbox_image: "registry.k8s.io/pause:3.9"
+
+# Runtime configuration
+containerd_runtime: "runc"
+containerd_runtime_endpoint: "unix:///run/containerd/containerd.sock"
+
+# Snapshotter
+containerd_snapshotter: "overlayfs"
+
+# Resource limits
+containerd_grpc_max_recv_message_size: 16777216  # 16MB
+containerd_grpc_max_send_message_size: 16777216  # 16MB
+
+# Registry mirrors (optional - for faster image pulls in lab)
+containerd_registry_mirrors: {}
+# Example:
+# containerd_registry_mirrors:
+#   "docker.io":
+#     - "https://mirror.gcr.io"
+
+# Insecure registries (for lab/dev environments)
+containerd_insecure_registries: []
+# Example:
+# containerd_insecure_registries:
+#   - "registry.local:5000"

@@ -1,0 +1,28 @@
+---
+#############################################################################
+# kube-controller-manager - Configuration Tasks
+#############################################################################
+
+- name: Verify required certificates exist
+  stat:
+    path: "{{ item }}"
+  register: cert_check
+  failed_when: not cert_check.stat.exists
+  loop:
+    - "{{ client_ca_file }}"
+    - "{{ tls_cert_file }}"
+    - "{{ tls_private_key_file }}"
+    - "{{ service_account_private_key_file }}"
+    - "{{ cluster_signing_cert_file }}"
+    - "{{ cluster_signing_key_file }}"
+
+- name: Create systemd service file for kube-controller-manager
+  template:
+    src: kube-controller-manager.service.j2
+    dest: /etc/systemd/system/kube-controller-manager.service
+    mode: '0644'
+  notify: restart kube-controller-manager
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes

@@ -36,18 +36,134 @@
     - role: common
       tags: ['common', 'base']
 
-  post_tasks:
-    - name: Display completion message
-      debug:
-        msg: "Common configuration completed on {{ ansible_hostname }}"
+    - role: pki
+      tags: ['pki', 'certificates']
 
-# Additional playbooks will be included here as we build them
-# - import_playbook: pki.yml
-# - import_playbook: container-runtime.yml
-# - import_playbook: etcd.yml
-# - import_playbook: control-plane.yml
-# - import_playbook: workers.yml
-# - import_playbook: network.yml
-# - import_playbook: dns.yml
-# - import_playbook: loadbalancer.yml
-# - import_playbook: storage.yml
+    - role: container-runtime
+      tags: ['containerd', 'runtime']
+
+    - role: etcd
+      tags: ['etcd', 'datastore']
+      when: inventory_hostname in groups['masters']
+
+  post_tasks:
+    - name: Display Phase 1 completion message
+      debug:
+        msg: "Phase 1 completed: Base configuration, PKI, container runtime, and etcd on {{ ansible_hostname }}"
+
+#############################################################################
+# Control Plane Components (Masters Only)
+#############################################################################
+
+- name: Install kubectl (for kubeconfig generation)
+  hosts: k8s_cluster
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Download kubectl binary
+      get_url:
+        url: "https://dl.k8s.io/v{{ k8s_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+      register: kubectl_download
+      retries: 3
+      delay: 5
+      until: kubectl_download is succeeded
+
+    - name: Verify kubectl installation
+      command: /usr/local/bin/kubectl version --client
+      register: kubectl_version
+      changed_when: false
+
+    - name: Display kubectl version
+      debug:
+        msg: "kubectl installed: {{ kubectl_version.stdout }}"
+
+- name: Kubernetes Control Plane Setup
+  hosts: masters
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: kube-apiserver
+      tags: ['control-plane', 'apiserver']
+
+    - role: kube-controller-manager
+      tags: ['control-plane', 'controller-manager']
+
+    - role: kube-scheduler
+      tags: ['control-plane', 'scheduler']
+
+  post_tasks:
+    - name: Display control plane completion message
+      debug:
+        msg:
+          - "════════════════════════════════════════"
+          - "  Control Plane Setup Complete"
+          - "════════════════════════════════════════"
+          - "Node: {{ ansible_hostname }}"
+          - "API Server: Running"
+          - "Controller Manager: Running"
+          - "Scheduler: Running"
+
+#############################################################################
+# Worker Components (All Nodes)
+#############################################################################
+
+- name: Kubernetes Worker Components Setup
+  hosts: k8s_cluster
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: kubelet
+      tags: ['worker', 'kubelet']
+
+    - role: kube-proxy
+      tags: ['worker', 'kube-proxy']
+
+  post_tasks:
+    - name: Display worker components completion message
+      debug:
+        msg:
+          - "════════════════════════════════════════"
+          - "  Worker Components Setup Complete"
+          - "════════════════════════════════════════"
+          - "Node: {{ ansible_hostname }}"
+          - "Kubelet: Running"
+          - "Kube-proxy: Running"
+
+#############################################################################
+# Final Verification
+#############################################################################
+
+- name: Final Cluster Verification
+  hosts: masters[0]
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Wait for API server to be fully ready
+      uri:
+        url: "https://{{ ansible_default_ipv4.address }}:6443/healthz"
+        validate_certs: no
+      register: api_health
+      until: api_health.status == 200
+      retries: 12
+      delay: 10
+
+    - name: Display final completion message
+      debug:
+        msg:
+          - "╔════════════════════════════════════════════════════════╗"
+          - "║    Kubernetes Cluster Setup Complete!                 ║"
+          - "╚════════════════════════════════════════════════════════╝"
+          - ""
+          - "Cluster Name: {{ cluster_name }}"
+          - "Kubernetes Version: {{ k8s_version }}"
+          - "Master Nodes: {{ groups['masters'] | length }}"
+          - "Worker Nodes: {{ groups['workers'] | length }}"
+          - ""
+          - "Next steps:"
+          - "1. Run 'make kubeconfig' to configure kubectl access"
+          - "2. Run 'kubectl get nodes' to see cluster nodes"
+          - "3. Deploy a CNI plugin for pod networking"

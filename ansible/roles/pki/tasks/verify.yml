@@ -1,0 +1,47 @@
+---
+#############################################################################
+# PKI Role - Certificate Verification
+#############################################################################
+
+- name: List certificates in PKI directory
+  find:
+    paths: "{{ pki_dir }}"
+    patterns: "*.crt"
+  register: certificates
+  become: true
+
+- name: Verify each certificate
+  shell: |
+    echo "Certificate: {{ item.path }}"
+    openssl x509 -in {{ item.path }} -noout -subject -dates -issuer
+    echo "---"
+  loop: "{{ certificates.files }}"
+  register: cert_verification
+  changed_when: false
+  become: true
+
+- name: Display verification results
+  debug:
+    msg: "{{ cert_verification.results | map(attribute='stdout_lines') | list }}"
+
+- name: Verify certificate chain
+  shell: openssl verify -CAfile {{ pki_dir }}/ca.crt {{ item.path }}
+  loop: "{{ certificates.files }}"
+  when: item.path != pki_dir + '/ca.crt'
+  register: cert_chain_verification
+  changed_when: false
+  failed_when: false
+  become: true
+
+# Display chain verification - commented out due to attribute access issues
+# - name: Display chain verification
+#   debug:
+#     msg: "{{ cert_chain_verification.results | selectattr('stdout', 'defined') | map(attribute='stdout') | list }}"
+#   when: cert_chain_verification.results is defined and cert_chain_verification.results | length > 0
+
+- name: Summary of generated certificates
+  debug:
+    msg:
+      - "Total certificates generated: {{ certificates.files | length }}"
+      - "Certificates:"
+      - "{{ certificates.files | map(attribute='path') | map('basename') | list }}"

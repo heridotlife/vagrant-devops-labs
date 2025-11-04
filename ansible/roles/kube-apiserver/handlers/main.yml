@@ -1,0 +1,15 @@
+---
+#############################################################################
+# kube-apiserver - Handlers
+#############################################################################
+
+- name: restart kube-apiserver
+  systemd:
+    name: kube-apiserver
+    state: restarted
+    daemon_reload: yes
+
+- name: reload kube-apiserver
+  systemd:
+    name: kube-apiserver
+    state: reloaded

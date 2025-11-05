@@ -173,6 +173,10 @@ kubeconfig
 *.retry
 *.pyc
 __pycache__/
+/tmp/ansible_facts/
+ansible.log
+.ansible/
+ansible/playbooks/*.retry
 
 # Logs
 *.log
@@ -227,3 +231,12 @@ cache/*/kubelet
 cache/*/kubectl
 cache/*/crictl
 cache/*.txt
+
+# Calico manifests (downloaded)
+calico.yaml
+calico-*.yaml
+/etc/calico/
+
+# Cluster state and temporary configs
+cluster-state/
+state/

@@ -26,6 +26,38 @@
   when: not cni_installed.stat.exists
   become: true
 
+- name: Configure SELinux context for CNI bin directory
+  community.general.sefcontext:
+    target: "{{ cni_bin_dir }}(/.*)?"
+    setype: container_file_t
+    state: present
+  when: ansible_selinux.status == "enabled"
+  become: true
+  ignore_errors: yes
+
+- name: Configure SELinux context for CNI config directory
+  community.general.sefcontext:
+    target: "{{ cni_config_dir }}(/.*)?"
+    setype: container_file_t
+    state: present
+  when: ansible_selinux.status == "enabled"
+  become: true
+  ignore_errors: yes
+
+- name: Apply SELinux context to CNI bin directory
+  command: restorecon -R -v {{ cni_bin_dir }}
+  when: ansible_selinux.status == "enabled"
+  become: true
+  changed_when: false
+  ignore_errors: yes
+
+- name: Apply SELinux context to CNI config directory
+  command: restorecon -R -v {{ cni_config_dir }}
+  when: ansible_selinux.status == "enabled"
+  become: true
+  changed_when: false
+  ignore_errors: yes
+
 - name: List installed CNI plugins
   find:
     paths: "{{ cni_bin_dir }}"

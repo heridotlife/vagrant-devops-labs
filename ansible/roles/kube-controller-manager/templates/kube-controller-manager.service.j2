@@ -4,6 +4,8 @@ Documentation=https://kubernetes.io/docs/concepts/overview/components/#kube-cont
 After=network.target
 
 [Service]
+StandardOutput=journal
+StandardError=journal
 ExecStart={{ k8s_bin_dir }}/kube-controller-manager \
   --bind-address={{ controller_manager_bind_address }} \
   --cluster-cidr={{ cluster_cidr }} \

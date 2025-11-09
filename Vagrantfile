@@ -163,6 +163,10 @@ Vagrant.configure("2") do |config|
   config.vm.box_version = VM_BOX_VERSION
   config.vm.box_check_update = false
 
+  # Install gems from Gemfile
+  config.vm.provision "shell", inline: "gem install bundler && bundle install"
+
+
   # SSH configuration
   config.ssh.insert_key = false
   config.ssh.forward_agent = true

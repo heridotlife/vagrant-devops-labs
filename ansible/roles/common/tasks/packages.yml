@@ -38,9 +38,12 @@
       - python3-setuptools
     state: present
 
+- name: Copy requirements.txt to remote host
+  copy:
+    src: requirements.txt
+    dest: /tmp/requirements.txt
+
 - name: Install useful Python modules
   pip:
-    name:
-      - jmespath  # Required for json_query filter
-    state: present
+    requirements: /tmp/requirements.txt
     executable: pip3

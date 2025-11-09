@@ -1,0 +1,43 @@
+---
+#############################################################################
+# Calico CNI - Default Variables
+#############################################################################
+
+# Calico version
+calico_version: "{{ lookup('env', 'CALICO_VERSION') | default('v3.27.0', true) }}"
+
+# Calico backend (bird, vxlan, none)
+calico_backend: "{{ lookup('env', 'CALICO_BACKEND') | default('vxlan', true) }}"
+
+# Pod CIDR - must match cluster pod_cidr
+calico_pod_cidr: "{{ pod_cidr | default('10.244.0.0/16') }}"
+
+# Calico manifest URL
+calico_manifest_url: "https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml"
+
+# Calico configuration directory
+calico_config_dir: "/etc/calico"
+calico_manifest_path: "{{ calico_config_dir }}/calico.yaml"
+
+# IP autodetection method
+# Options: first-found, can-reach=DESTINATION, interface=INTERFACE-REGEX, skip-interface=INTERFACE-REGEX
+calico_ip_autodetection_method: "interface=enp0s8"  # Use host-only network interface
+
+# Enable IP-in-IP encapsulation (for IPIP backend)
+calico_ipip_mode: "Never"  # Options: Always, CrossSubnet, Never
+
+# Enable VXLAN encapsulation (for VXLAN backend)
+calico_vxlan_mode: "Always"  # Options: Always, CrossSubnet, Never
+
+# MTU for Calico
+calico_veth_mtu: "1450"
+
+# Typha (for large clusters)
+calico_typha_enabled: false
+calico_typha_replicas: 1
+
+# Network policy
+calico_network_policy_enabled: true
+
+# Felix configuration
+calico_felix_log_level: "info"  # debug, info, warning, error, fatal

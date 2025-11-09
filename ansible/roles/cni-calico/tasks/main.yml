@@ -1,0 +1,103 @@
+---
+#############################################################################
+# Calico CNI - Main Tasks
+#############################################################################
+
+- name: Display Calico CNI installation info
+  debug:
+    msg:
+      - "══════════════════════════════════════════"
+      - "  Installing Calico CNI {{ calico_version }}"
+      - "══════════════════════════════════════════"
+      - "Backend: {{ calico_backend }}"
+      - "Pod CIDR: {{ calico_pod_cidr }}"
+      - "IP Detection: {{ calico_ip_autodetection_method }}"
+  run_once: true
+
+- name: Create Calico configuration directory
+  file:
+    path: "{{ calico_config_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download Calico manifest
+  get_url:
+    url: "{{ calico_manifest_url }}"
+    dest: "{{ calico_manifest_path }}"
+    mode: '0644'
+    force: yes
+  register: calico_manifest_download
+  retries: 3
+  delay: 5
+  until: calico_manifest_download is succeeded
+
+- name: Configure Calico for our pod CIDR
+  replace:
+    path: "{{ calico_manifest_path }}"
+    regexp: '192\.168\.0\.0/16'
+    replace: "{{ calico_pod_cidr }}"
+  when: calico_pod_cidr != '192.168.0.0/16'
+
+- name: Add privileged security context to install-cni init container
+  replace:
+    path: "{{ calico_manifest_path }}"
+    regexp: '(- name: install-cni\s+image:.*?\s+imagePullPolicy:.*?\s+command:.*?\s+)(envFrom:)'
+    replace: '\1securityContext:\n            privileged: true\n          \2'
+  register: privileged_patch
+  failed_when: false
+
+- name: Display privileged mode patch result
+  debug:
+    msg: "Added privileged mode to install-cni container"
+  when: privileged_patch.changed
+
+- name: Deploy Calico CNI
+  command: >
+    {{ k8s_bin_dir }}/kubectl apply -f {{ calico_manifest_path }}
+    --kubeconfig={{ k8s_config_dir }}/admin.conf
+  register: calico_deploy
+  changed_when: "'created' in calico_deploy.stdout or 'configured' in calico_deploy.stdout"
+  failed_when: calico_deploy.rc != 0
+  environment:
+    KUBECONFIG: "{{ k8s_config_dir }}/admin.conf"
+
+- name: Wait for Calico pods to be ready
+  command: >
+    {{ k8s_bin_dir }}/kubectl wait --for=condition=Ready pod
+    -l k8s-app=calico-node
+    -n kube-system
+    --timeout=300s
+    --kubeconfig={{ k8s_config_dir }}/admin.conf
+  register: calico_pods_ready
+  until: calico_pods_ready.rc == 0
+  retries: 10
+  delay: 30
+  changed_when: false
+  failed_when: false
+
+- name: Display Calico deployment status
+  debug:
+    msg: "{{ calico_deploy.stdout_lines }}"
+  when: calico_deploy.stdout_lines is defined
+
+- name: Verify Calico installation
+  command: >
+    {{ k8s_bin_dir }}/kubectl get pods -n kube-system -l k8s-app=calico-node
+    --kubeconfig={{ k8s_config_dir }}/admin.conf
+  register: calico_pods
+  changed_when: false
+
+- name: Display Calico pods
+  debug:
+    msg: "{{ calico_pods.stdout_lines }}"
+
+- name: Display completion message
+  debug:
+    msg:
+      - "══════════════════════════════════════════"
+      - "  Calico CNI Installation Complete"
+      - "══════════════════════════════════════════"
+      - "Version: {{ calico_version }}"
+      - "Backend: {{ calico_backend }}"
+      - "Pod CIDR: {{ calico_pod_cidr }}"
+  run_once: true

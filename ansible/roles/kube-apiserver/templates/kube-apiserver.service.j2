@@ -5,6 +5,8 @@ After=network.target
 
 [Service]
 Type=notify
+StandardOutput=journal
+StandardError=journal
 ExecStart={{ k8s_bin_dir }}/kube-apiserver \
   --advertise-address={{ apiserver_advertise_address }} \
   --allow-privileged=true \

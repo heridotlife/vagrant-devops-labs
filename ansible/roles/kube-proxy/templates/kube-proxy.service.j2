@@ -4,6 +4,8 @@ Documentation=https://kubernetes.io/docs/concepts/overview/components/#kube-prox
 After=network.target
 
 [Service]
+StandardOutput=journal
+StandardError=journal
 ExecStart={{ k8s_bin_dir }}/kube-proxy \
   --config={{ kube_proxy_config_path }} \
   --v={{ kube_proxy_log_level }}
